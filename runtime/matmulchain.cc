@@ -93,26 +93,26 @@ public:
 		// celerity::buffer<float, 2> mat_b_buf(mat_b.data(), cl::sycl::range<2>(mat_size, mat_size));
 		// celerity::buffer<float, 2> mat_c_buf(cl::sycl::range<2>(mat_size, mat_size));
 
-		//mat_a_buf.initialize(benchQueue, mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
-		//mat_b_buf.initialize(benchQueue, mat_b.data(), cl::sycl::range<2>(mat_size, mat_size));
-		//mat_c_buf.initialize(benchQueue, mat_c.data(), cl::sycl::range<2>(mat_size, mat_size));
-		//mat_d_buf.initialize(benchQueue, mat_d.data(), cl::sycl::range<2>(mat_size, mat_size));
-		//mat_res_buf.initialize(benchQueue, mat_res.data(), cl::sycl::range<2>(mat_size, mat_size));
-		//mat_p_buf.initialize(benchQueue, cl::sycl::range<2>(mat_size, mat_size));
-		//mat_q_buf.initialize(benchQueue, cl::sycl::range<2>(mat_size, mat_size));
+		//mat_a_buf.initialize(QueueManager::getInstance(), mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
+		//mat_b_buf.initialize(QueueManager::getInstance(), mat_b.data(), cl::sycl::range<2>(mat_size, mat_size));
+		//mat_c_buf.initialize(QueueManager::getInstance(), mat_c.data(), cl::sycl::range<2>(mat_size, mat_size));
+		//mat_d_buf.initialize(QueueManager::getInstance(), mat_d.data(), cl::sycl::range<2>(mat_size, mat_size));
+		//mat_res_buf.initialize(QueueManager::getInstance(), mat_res.data(), cl::sycl::range<2>(mat_size, mat_size));
+		//mat_p_buf.initialize(QueueManager::getInstance(), cl::sycl::range<2>(mat_size, mat_size));
+		//mat_q_buf.initialize(QueueManager::getInstance(), cl::sycl::range<2>(mat_size, mat_size));
 	}
 
 	void run() {
-		multiply(benchQueue, *mat_a_buf.get(), *mat_b_buf.get(), *mat_p_buf.get(), mat_size);
-		multiply(benchQueue, *mat_c_buf.get(), *mat_d_buf.get(), *mat_q_buf.get(), mat_size);
-		multiply(benchQueue, *mat_p_buf.get(), *mat_q_buf.get(), *mat_res_buf.get(), mat_size);
+		multiply(QueueManager::getInstance(), *mat_a_buf.get(), *mat_b_buf.get(), *mat_p_buf.get(), mat_size);
+		multiply(QueueManager::getInstance(), *mat_c_buf.get(), *mat_d_buf.get(), *mat_q_buf.get(), mat_size);
+		multiply(QueueManager::getInstance(), *mat_p_buf.get(), *mat_q_buf.get(), *mat_res_buf.get(), mat_size);
 	}
 
 	static std::string getBenchmarkName() { return "MatmulChain"; }
 
 	bool verify(VerificationSetting &ver) {
 		bool verification_passed = true;
-		/*benchQueue.with_master_access([&](celerity::handler& cgh) {
+		/*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
 			auto result = mat_res_buf.get()->get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
 
 			cgh.run([=, &verification_passed]() {

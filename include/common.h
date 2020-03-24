@@ -26,8 +26,6 @@
   #include "nv_energy_meas.h"
 #endif
 
-celerity::distr_queue& benchQueue = QueueManager::getInstance();
-
 template<class Benchmark>
 class BenchmarkManager
 {
@@ -71,7 +69,7 @@ public:
 
         //args.device_queue.wait_and_throw();
         //args.device_queue.slow_full_sync();
-        benchQueue.slow_full_sync();
+        QueueManager::getInstance().slow_full_sync();
         for(auto h : hooks) h->postSetup();
 
         std::vector<cl::sycl::event> run_events;
@@ -87,7 +85,7 @@ public:
         }
         //args.device_queue.wait_and_throw();
         //args.device_queue.slow_full_sync();
-        benchQueue.slow_full_sync();
+        QueueManager::getInstance().slow_full_sync();
         const auto after = std::chrono::high_resolution_clock::now();
         for(auto h : hooks) h->postKernel();
         // Performance critical measurement section ends here
