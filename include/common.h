@@ -1,6 +1,5 @@
 #pragma once 
-//#include <CL/sycl.hpp>
-#include <celerity.h>
+#include <celerity/celerity.h>
 
 #include <string>
 #include <iostream>
@@ -67,8 +66,6 @@ public:
 
         b.setup();
 
-        //args.device_queue.wait_and_throw();
-        //args.device_queue.slow_full_sync();
         QueueManager::getInstance().slow_full_sync();
         for(auto h : hooks) h->postSetup();
 
@@ -83,8 +80,6 @@ public:
         } else {
           b.run();
         }
-        //args.device_queue.wait_and_throw();
-        //args.device_queue.slow_full_sync();
         QueueManager::getInstance().slow_full_sync();
         const auto after = std::chrono::high_resolution_clock::now();
         for(auto h : hooks) h->postKernel();
@@ -173,8 +168,6 @@ private:
 class BenchmarkApp
 {
   BenchmarkArgs args;  
-  //cl::sycl::queue device_queue;
-  //celerity::distr_queue& device_queue;
   std::unordered_set<std::string> benchmark_names;
   
 public:  

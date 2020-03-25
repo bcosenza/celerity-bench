@@ -10,7 +10,7 @@
 #include <sstream>
 #include <memory>
 //#include <CL/sycl.hpp>
-#include <celerity.h>
+#include <celerity/celerity.h>
 #include "result_consumer.h"
 
 using CommandLineArguments = std::unordered_map<std::string, std::string>;

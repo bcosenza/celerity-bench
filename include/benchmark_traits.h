@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include <celerity.h>
+#include <celerity/celerity.h>
 
 namespace cl {
 namespace sycl {
