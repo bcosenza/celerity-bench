@@ -112,11 +112,11 @@ public:
 
 	bool verify(VerificationSetting &ver) {
 		bool verification_passed = true;
-		/*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-			auto result = mat_res_buf.get()->get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
+		QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+			auto result = mat_res_buf.get()->template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
 
 			cgh.run([=, &verification_passed]() {
-				celerity::experimental::bench::end("main program");
+				//celerity::experimental::bench::end("main program");
 
 				for(size_t i = 0; i < mat_size; ++i) {
 					for(size_t j = 0; j < mat_size; ++j) {
@@ -131,7 +131,7 @@ public:
 					if(!verification_passed) { break; }
 				}
 			});
-		});*/
+		});
 		return verification_passed;
 	}
 };
