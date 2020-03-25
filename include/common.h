@@ -56,7 +56,11 @@ public:
     for(auto h : hooks) h->atInit();
 
     bool all_runs_pass = true;
+    bool is_master = false;
     try {
+      QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+        is_master = true;
+      });
       // Run until we have as many runs as requested or until
       // verification fails
       for(std::size_t run = 0; run < args.num_runs && all_runs_pass; ++run) {
@@ -110,6 +114,7 @@ public:
               if(!b.verify(args.verification)) {
                 all_runs_pass = false;
               }
+              QueueManager::getInstance().slow_full_sync();
             }
           }
         }
@@ -119,25 +124,27 @@ public:
       std::rethrow_exception(std::current_exception());
     }
 
-    time_metrics.emitResults(*args.result_consumer);
+    if (is_master) {
+      time_metrics.emitResults(*args.result_consumer);
 
-    for (auto h : hooks) {
-      // Extract results from the hooks
-      h->emitResults(*args.result_consumer);
-    }
+      for (auto h : hooks) {
+        // Extract results from the hooks
+        h->emitResults(*args.result_consumer);
+      }
 
-    if(args.verification.range.size() == 0 || !args.verification.enabled ||
-        !cl::sycl::detail::BenchmarkTraits<Benchmark>::hasVerify) {
-      args.result_consumer->consumeResult("Verification", "N/A");
+      if(args.verification.range.size() == 0 || !args.verification.enabled ||
+          !cl::sycl::detail::BenchmarkTraits<Benchmark>::hasVerify) {
+        args.result_consumer->consumeResult("Verification", "N/A");
+      }
+      else if(!all_runs_pass){
+        // error
+        args.result_consumer->consumeResult("Verification", "FAIL");
+      }
+      else {
+        // pass
+        args.result_consumer->consumeResult("Verification", "PASS");
+      }
     }
-    else if(!all_runs_pass){
-      // error
-      args.result_consumer->consumeResult("Verification", "FAIL");
-    }
-    else {
-      // pass
-      args.result_consumer->consumeResult("Verification", "PASS");
-    }        
     
     args.result_consumer->flush();
     
