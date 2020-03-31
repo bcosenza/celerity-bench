@@ -26,6 +26,6 @@ function(add_benchmark source_dir target_name)
   )
 endfunction(add_benchmark)
 
-#add_benchmark(single-kernel matmul)
+add_benchmark(single-kernel vec_add)
 add_benchmark(runtime matmulchain)
 
