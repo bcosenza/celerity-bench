@@ -66,7 +66,7 @@ public:
     bool pass = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.get().template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
-      cgh.run([=]() {
+      cgh.run([=, &pass]() {
       for(size_t i=ver.begin[0]; i<ver.begin[0]+ver.range[0]; i++){
           auto expected = input1[i] + input2[i];
           if(expected != output[i]){
