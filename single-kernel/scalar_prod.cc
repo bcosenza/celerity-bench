@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <iomanip>
 
+#define parallelForWorkGroup = 0
+
 //using namespace cl::sycl;
 namespace s = cl::sycl;
 
@@ -61,7 +63,7 @@ public:
     events.push_back(queue.submit(
         [=](celerity::handler& cgh) {
       auto in1 = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
-      auto in2 = b.template get_access<s::access::mode::read>(cgh), celerity::access::one_to_one<1>());
+      auto in2 = b.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
       // Use discard_write here, otherwise the content of the hostbuffer must first be copied to device
       auto intermediate_product = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
 
@@ -76,6 +78,7 @@ public:
           });
       }
       else {
+        #ifdef parallelForWorkGroup
         cgh.parallel_for_work_group<class ScalarProdKernelHierarchical<T, Use_ndrange>>(
           cl::sycl::range<1>{args.problem_size / args.local_size},
           cl::sycl::range<1>{args.local_size},
@@ -85,6 +88,7 @@ public:
               intermediate_product[gid] = in1[gid] * in2[gid];
             });
           });
+        #endif
       }
     }));
 
@@ -139,6 +143,7 @@ public:
               });
           }
           else {
+            #ifdef parallelForWorkGroup
             cgh.parallel_for_work_group<class ScalarProdReductionHierarchical<T, Use_ndrange>>(
               cl::sycl::range<1>{n_wgroups}, cl::sycl::range<1>{wgroup_size},
               [=](cl::sycl::group<1> grp){
@@ -172,6 +177,7 @@ public:
                   global_mem[grp.get_id(0)] = local_mem[0];
                 });
               });
+              #endif
           }
         }));
 
