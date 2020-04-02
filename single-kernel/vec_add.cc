@@ -62,17 +62,20 @@ public:
   }
 
   bool verify(VerificationSetting &ver) {
-    //Triggers writeback
     //output_buf.reset();
-
     bool pass = true;
-    for(size_t i=ver.begin[0]; i<ver.begin[0]+ver.range[0]; i++){
-        auto expected = input1[i] + input2[i];
-        if(expected != output[i]){
-            pass = false;
-            break;
-        }
-      }    
+    QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+      auto result = output_buf.get().template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
+      cgh.run([=]() {
+      for(size_t i=ver.begin[0]; i<ver.begin[0]+ver.range[0]; i++){
+          auto expected = input1[i] + input2[i];
+          if(expected != output[i]){
+              pass = false;
+              break;
+          }
+        }  
+      });
+    });  
     return pass;
   }
   
