@@ -44,12 +44,15 @@ public:
    // celerity::buffer<T,1> input1_buf(input1.data(), s::range<1>(args.problem_size));
    // celerity::buffer<T,1> input2_buf(input2.data(), s::range<1>(args.problem_size));
    // celerity::buffer<T,1> output_buf(output.data(), s::range<1>(args.problem_size));
-  
+  celerity::buffer<T,1>& a = input1_buf.get();
+  celerity::buffer<T,1>& b = input2_buf.get();
+  celerity::buffer<T,1>& c = output_buf.get();
+
     queue.submit([=](celerity::handler& cgh) {
-      auto in1 = input1_buf.get().template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
-      auto in2 = input2_buf.get().template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
+      auto in1 = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
+      auto in2 = b.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
       // Use discard_write here, otherwise the content of the host buffer must first be copied to device
-      auto out = output_buf.get().template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
+      auto out = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
       cl::sycl::range<1> ndrange {args.problem_size};
 
       cgh.parallel_for<class VecAddKernel<T>>(ndrange,
@@ -65,7 +68,7 @@ public:
     //output_buf.reset();
     bool pass = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-      auto result = output_buf.get().template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
+      auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
       cgh.run([=, &pass]() {
       for(size_t i=ver.begin[0]; i<ver.begin[0]+ver.range[0]; i++){
           auto expected = input1[i] + input2[i];
