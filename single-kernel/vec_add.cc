@@ -41,15 +41,15 @@ public:
   
     celerity::distr_queue& queue = QueueManager::getInstance();
 
-    celerity::buffer<T,1> input1_buf(input1.data(), s::range<1>(args.problem_size));
-    celerity::buffer<T,1> input2_buf(input2.data(), s::range<1>(args.problem_size));
-    celerity::buffer<T,1> output_buf(output.data(), s::range<1>(args.problem_size));
+   // celerity::buffer<T,1> input1_buf(input1.data(), s::range<1>(args.problem_size));
+   // celerity::buffer<T,1> input2_buf(input2.data(), s::range<1>(args.problem_size));
+   // celerity::buffer<T,1> output_buf(output.data(), s::range<1>(args.problem_size));
   
     queue.submit([=](celerity::handler& cgh) {
-      auto in1 = input1_buf.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
-      auto in2 = input2_buf.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
+      auto in1 = input1_buf.get().template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
+      auto in2 = input2_buf.get().template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
       // Use discard_write here, otherwise the content of the host buffer must first be copied to device
-      auto out = output_buf.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
+      auto out = output_buf.get().template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
       cl::sycl::range<1> ndrange {args.problem_size};
 
       cgh.parallel_for<class VecAddKernel<T>>(ndrange,
