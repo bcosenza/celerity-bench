@@ -45,19 +45,25 @@ public:
       output[i] = static_cast<T>(0);
     }
 
-    input1_buf.initialize(args.device_queue, input1.data(), s::range<1>(args.problem_size));
-    input2_buf.initialize(args.device_queue, input2.data(), s::range<1>(args.problem_size));
-    output_buf.initialize(args.device_queue, output.data(), s::range<1>(args.problem_size));
+    input1_buf.initialize(input1.data(), s::range<1>(args.problem_size));
+    input2_buf.initialize(input2.data(), s::range<1>(args.problem_size));
+    output_buf.initialize(output.data(), s::range<1>(args.problem_size));
   }
 
   void run(std::vector<cl::sycl::event>& events) {
+
+    celerity::distr_queue& queue = QueueManager::getInstance();
+
+    celerity::buffer<T,1>& a = input1_buf.get();
+    celerity::buffer<T,1>& b = input2_buf.get();
+    celerity::buffer<T,1>& c = output_buf.get();
     
-    events.push_back(args.device_queue.submit(
-        [&](cl::sycl::handler& cgh) {
-      auto in1 = input1_buf.template get_access<s::access::mode::read>(cgh);
-      auto in2 = input2_buf.template get_access<s::access::mode::read>(cgh);
+    events.push_back(queue.submit(
+        [&](celerity::handler& cgh) {
+      auto in1 = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
+      auto in2 = b.template get_access<s::access::mode::read>(cgh), celerity::access::one_to_one<1>();
       // Use discard_write here, otherwise the content of the hostbuffer must first be copied to device
-      auto intermediate_product = output_buf.template get_access<s::access::mode::discard_write>(cgh);
+      auto intermediate_product = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
 
       if(Use_ndrange){
         cl::sycl::nd_range<1> ndrange (args.problem_size, args.local_size);
@@ -92,13 +98,13 @@ public:
     while (array_size!= 1) {
       auto n_wgroups = (array_size + wgroup_size*elements_per_thread - 1)/(wgroup_size*elements_per_thread); // two threads per work item
 
-      events.push_back(args.device_queue.submit(
-        [&](cl::sycl::handler& cgh) {
+      events.push_back(queue.submit(
+        [&](celerity::handler& cgh) {
 
-          auto global_mem = output_buf.template get_access<s::access::mode::read_write>(cgh);
+          auto global_mem = c.template get_access<s::access::mode::read_write>(cgh, celerity::access::one_to_one<1>());
       
           // local memory for reduction
-          auto local_mem = s::accessor <T, 1, s::access::mode::read_write, s::access::target::local> {s::range<1>(wgroup_size), cgh};
+          auto local_mem = s::accessor <T, 1, s::access::mode::read_write, s::access::target::local> {s::range<1>(wgroup_size), cgh, celerity::access::one_to_one<1>()};
           cl::sycl::nd_range<1> ndrange (n_wgroups*wgroup_size, wgroup_size);
     
           if(Use_ndrange) {
