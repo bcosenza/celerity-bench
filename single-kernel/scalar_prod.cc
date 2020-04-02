@@ -59,9 +59,9 @@ public:
     celerity::buffer<T,1>& c = output_buf.get();
     
     events.push_back(queue.submit(
-        [&](celerity::handler& cgh) {
+        [=](celerity::handler& cgh) {
       auto in1 = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
-      auto in2 = b.template get_access<s::access::mode::read>(cgh), celerity::access::one_to_one<1>();
+      auto in2 = b.template get_access<s::access::mode::read>(cgh), celerity::access::one_to_one<1>());
       // Use discard_write here, otherwise the content of the hostbuffer must first be copied to device
       auto intermediate_product = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
 
