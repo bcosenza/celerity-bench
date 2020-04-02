@@ -13,9 +13,9 @@ protected:
   std::vector<T> output;
   BenchmarkArgs args;
 
- // celerity::buffer<T, 1> input1_buf;
-//  celerity::buffer<T, 1> input2_buf;
-//  celerity::buffer<T, 1> output_buf;
+ PrefetchedBuffer<T, 1> input1_buf;
+ PrefetchedBuffer<T, 1> input2_buf;
+ PrefetchedBuffer<T, 1> output_buf;
 
 public:
   VecAddBench(const BenchmarkArgs &_args) : args(_args) {}
@@ -32,9 +32,9 @@ public:
       output[i] = static_cast<T>(0);
     }
 
-//    input1_buf = celerity::buffer<T,1>(input1.data(), s::range<1>(args.problem_size));
-//    input2_buf = celerity::buffer<T,1>(input2.data(), s::range<1>(args.problem_size));
-//    output_buf = celerity::buffer<T,1>(output.data(), s::range<1>(args.problem_size));
+    input1_buf.initialize(input1.data(), s::range<1>(args.problem_size));
+    input2_buf.initialize(input2.data(), s::range<1>(args.problem_size));
+    output_buf.initialize(output.data(), s::range<1>(args.problem_size));
   }
 
   void run() {
