@@ -41,12 +41,9 @@ public:
   
     celerity::distr_queue& queue = QueueManager::getInstance();
 
-   // celerity::buffer<T,1> input1_buf(input1.data(), s::range<1>(args.problem_size));
-   // celerity::buffer<T,1> input2_buf(input2.data(), s::range<1>(args.problem_size));
-   // celerity::buffer<T,1> output_buf(output.data(), s::range<1>(args.problem_size));
-  celerity::buffer<T,1>& a = input1_buf.get();
-  celerity::buffer<T,1>& b = input2_buf.get();
-  celerity::buffer<T,1>& c = output_buf.get();
+    celerity::buffer<T,1>& a = input1_buf.get();
+    celerity::buffer<T,1>& b = input2_buf.get();
+    celerity::buffer<T,1>& c = output_buf.get();
 
     queue.submit([=](celerity::handler& cgh) {
       auto in1 = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
