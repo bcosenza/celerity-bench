@@ -26,7 +26,7 @@ function(add_benchmark source_dir target_name)
   )
 endfunction(add_benchmark)
 add_benchmark(micro arith)
-
+add_benchmark(micro DRAM)
 add_benchmark(single-kernel vec_add)
 #add_benchmark(single-kernel scalar_prod)
 add_benchmark(single-kernel mol_dyn)
