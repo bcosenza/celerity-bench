@@ -73,17 +73,19 @@ public:
   }
 
   bool verify(VerificationSetting& ver) {
+    bool pass = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<s::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
-      cgh.run([=]() {
+      cgh.run([=,&pass]() {
         for(size_t i = 0; i < args.problem_size; ++i) {
           if(result[i] != DataT{1}) {
-            return false;
+            pass = false;
+            break;
           }
         }
       });
     });
-    return true;
+    return pass;
   }
 
   static std::string getBenchmarkName() {
