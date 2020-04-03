@@ -54,9 +54,9 @@ public:
 
     celerity::distr_queue& queue = QueueManager::getInstance();
 
-    celerity::buffer<T,1>& a = input_buf.get();
-    celerity::buffer<T,1>& b = neighbour_buf.get();
-    celerity::buffer<T,1>& c = output_buf.get();
+    celerity::buffer<s::float4, 1>& a = input_buf.get();
+    celerity::buffer<int,1>& b = neighbour_buf.get();
+    celerity::buffer<s::float4, 1>& c = output_buf.get();
     
     queue.submit([=](celerity::handler& cgh) {
       auto in = a.get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
