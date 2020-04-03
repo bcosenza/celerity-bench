@@ -54,12 +54,12 @@ public:
   void run() {
     celerity::distr_queue& queue = QueueManager::getInstance();
 
-    celerity::buffer<DataT, 1>& a = input_buf.get();
-    celerity::buffer<DataT, 1>& b = output_buf.get();
+    celerity::buffer<DataT, Dims>& a = input_buf.get();
+    celerity::buffer<DataT, Dims>& b = output_buf.get();
 
     queue.submit([=](celerity::handler& cgh) {
-      auto in = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
-      auto out = b.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
+      auto in = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<Dims>());
+      auto out = b.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<Dims>());
       // We spawn one work item for each buffer element to be copied.
       const s::range<Dims> global_size{buffer_size};
       cgh.parallel_for<MicroBenchDRAMKernel<DataT, Dims>>(global_size, [=](s::id<Dims> gid) { out[gid] = in[gid]; });
@@ -69,7 +69,7 @@ public:
   bool verify(VerificationSetting& ver) {
     bool pass = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-      auto result = output_buf.template get_access<s::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
+      auto result = output_buf.template get_access<s::access::mode::read>(cgh, cl::sycl::range<(size_t)Dims>(args.problem_size));
       cgh.run([=,&pass]() {
         for(size_t i = 0; i < buffer_size[0]; ++i) {
           for(size_t j = 0; j < (Dims < 2 ? 1 : buffer_size[1]); ++j) {
