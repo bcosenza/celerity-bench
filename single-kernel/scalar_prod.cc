@@ -61,10 +61,10 @@ public:
       // Use discard_write here, otherwise the content of the hostbuffer must first be copied to device
       auto intermediate_product = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
 
-      cl::sycl::nd_range<1> ndrange (args.problem_size, args.local_size);
+      cl::sycl::range<1> ndrange (args.problem_size);
 
       cgh.parallel_for<class ScalarProdKernel<T>>(ndrange,
-        [=](cl::sycl::nd_item<1> item) 
+        [=](cl::sycl::id<1> item) 
         {
           size_t gid= item.get_global_linear_id();
           intermediate_product[gid] = in1[gid] * in2[gid];
@@ -87,11 +87,11 @@ public:
       
           // local memory for reduction
           auto local_mem = s::accessor <T, 1, s::access::mode::read_write, s::access::target::local> {s::range<1>(wgroup_size), cgh, celerity::access::one_to_one<1>()};
-          cl::sycl::nd_range<1> ndrange (n_wgroups*wgroup_size, wgroup_size);
+          cl::sycl::range<1> ndrange (n_wgroups*wgroup_size);
     
 
           cgh.parallel_for<class ScalarProdReduction<T>>(ndrange,
-          [=](cl::sycl::nd_item<1> item) 
+          [=](cl::sycl::id<1> item) 
             {
               size_t gid= item.get_global_linear_id();
               size_t lid = item.get_local_linear_id();
