@@ -1,5 +1,4 @@
-#include "common.h"
-
+#include "common.h"    
 #include <iostream>
 #include <type_traits>
 #include <iomanip>
@@ -52,7 +51,7 @@ public:
     output_buf.initialize(output.data(), s::range<1>(args.problem_size));
   }
 
-  void run(std::vector<cl::sycl::event>& events) {
+  void run() {
 
     celerity::distr_queue& queue = QueueManager::getInstance();
 
@@ -101,7 +100,7 @@ public:
     while (array_size!= 1) {
       auto n_wgroups = (array_size + wgroup_size*elements_per_thread - 1)/(wgroup_size*elements_per_thread); // two threads per work item
 
-      queue.submit([&](celerity::handler& cgh) {
+      queue.submit([=](celerity::handler& cgh) {
 
           auto global_mem = c.template get_access<s::access::mode::read_write>(cgh, celerity::access::one_to_one<1>());
       
@@ -187,6 +186,7 @@ public:
     bool pass = true;
     auto expected = static_cast <T>(0);
 
+   // celerity::buffer<T,1>& c = output_buf.get();
     auto output_acc = output_buf.template get_access<s::access::mode::read>();
 
     for(size_t i = 0; i < args.problem_size; i++) {
