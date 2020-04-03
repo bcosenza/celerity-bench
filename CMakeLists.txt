@@ -25,6 +25,7 @@ function(add_benchmark source_dir target_name)
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${source_dir}"
   )
 endfunction(add_benchmark)
+add_benchmark(micro arith)
 
 add_benchmark(single-kernel vec_add)
 #add_benchmark(single-kernel scalar_prod)
