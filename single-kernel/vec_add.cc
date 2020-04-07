@@ -26,11 +26,13 @@ public:
     input2.resize(args.problem_size);
     output.resize(args.problem_size);
 
-    for (size_t i =0; i < args.problem_size; i++) {
+    for (size_t i = 0; i < args.problem_size; i++) {
       input1[i] = static_cast<T>(i);
       input2[i] = static_cast<T>(i);
       output[i] = static_cast<T>(0);
+     // std::cout << input1[i] << ":" << input2[i] << std::endl;
     }
+    
 
     input1_buf.initialize(input1.data(), s::range<1>(args.problem_size));
     input2_buf.initialize(input2.data(), s::range<1>(args.problem_size));
@@ -63,20 +65,23 @@ public:
 
   bool verify(VerificationSetting &ver) {
     //output_buf.reset();
-    bool pass = true;
+    bool verification_passed = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
-      cgh.run([=, &pass]() {
-      for(size_t i=ver.begin[0]; i<ver.begin[0]+ver.range[0]; i++){
+      cgh.run([=, &verification_passed]() {
+      for(size_t i = 0; i < args.problem_size; i++){
           auto expected = input1[i] + input2[i];
+          std::cout <<"expected=" << expected << ":" << "output=" << result[i] << std::endl;
           if(expected != output[i]){
-              pass = false;
+              verification_passed = false;
+              std::cout << "FAILED" << std::endl;
               break;
           }
         }  
       });
     });  
-    return pass;
+    std::cout << "Pass = " << verification_passed << std::endl;
+    return verification_passed;
   }
   
   static std::string getBenchmarkName() {
@@ -91,8 +96,8 @@ int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
   app.run<VecAddBench<int>>();
-  app.run<VecAddBench<long long>>();  
-  app.run<VecAddBench<float>>();
-  app.run<VecAddBench<double>>();
+//  app.run<VecAddBench<long long>>();  
+//  app.run<VecAddBench<float>>();
+//  app.run<VecAddBench<double>>();
   return 0;
 }
