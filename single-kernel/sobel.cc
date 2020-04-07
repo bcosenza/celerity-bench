@@ -31,7 +31,7 @@ public:
   void setup() {
     size = args.problem_size; // input size defined by the user
     input.resize(size * size); 
-    load_bitmap_mirrored("../../share/Brommy.bmp", size, input);
+    load_bitmap_mirrored("../Brommy.bmp", size, input);
     output.resize(size * size);
 
     input_buf.initialize(input.data(), s::range<2>(size, size));    
@@ -45,8 +45,8 @@ public:
     celerity::buffer<cl::sycl::float4,2>& c = output_buf.get();
 
     queue.submit([=](celerity::handler& cgh) {
-      auto in = a.get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
-      auto out = c.get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
+      auto in = a.get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto out = c.get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
       cl::sycl::range<2> ndrange{size, size};
 
       // Sobel kernel 3x3
@@ -106,7 +106,7 @@ public:
       auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(args.problem_size, args.problem_size));
       cgh.run([=, &pass]() {
 
-        save_bitmap("sobel3.bmp", size, result);
+        save_bitmap("sobel3.bmp", size, output);
 
         const float kernel[] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
         int radius = 3;
@@ -137,7 +137,7 @@ public:
           cl::sycl::float4 minval = cl::sycl::float4(0.0, 0.0, 0.0, 0.0);
           cl::sycl::float4 maxval = cl::sycl::float4(1.0, 1.0, 1.0, 1.0);
           cl::sycl::float4 expected = clamp(color, minval, maxval);
-          cl::sycl::float4 dif = fdim(result[i], expected);
+          cl::sycl::float4 dif = fdim(output[i], expected);
           float length = cl::sycl::length(dif);
           if(length > 0.01f) {
             pass = false;
