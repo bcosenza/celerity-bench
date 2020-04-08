@@ -32,7 +32,9 @@ endfunction(add_benchmark)
 #add_benchmark(single-kernel vec_add)
 #add_benchmark(single-kernel scalar_prod)
 #add_benchmark(single-kernel mol_dyn)
-add_benchmark(single-kernel sobel)
+#add_benchmark(single-kernel sobel)
+add_benchmark(single-kernel sobel5)
+add_benchmark(single-kernel sobel7)
 
 #add_benchmark(runtime matmulchain)
 
