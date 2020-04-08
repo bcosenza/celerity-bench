@@ -63,24 +63,20 @@ public:
   }
 
   bool verify(VerificationSetting &ver) {
-    //output_buf.reset();
     bool verification_passed = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
       cgh.run([=, &verification_passed]() {
       for(size_t i = 0; i < args.problem_size; i++){
           auto expected = input1[i] + input2[i];
-          std::cout <<"expected=" << expected << ":" << "output=" << result[i] << std::endl;
-          if(expected != output[i]){
+          if(expected != result[i]){
               verification_passed = false;
-              std::cout << "FAILED" << std::endl;
               break;
           }
         }  
       });
     });
     QueueManager::sync();
-    std::cout << "Pass = " << verification_passed << std::endl;
     return verification_passed;
   }
   
