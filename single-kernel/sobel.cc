@@ -100,14 +100,21 @@ public:
 
   bool verify(VerificationSetting& ver) {
     // Triggers writeback
-    output_buf.reset();
+    //output_buf.reset();
     bool pass = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(args.problem_size, args.problem_size));
+      
+      for (size_t i = 0; i < args.problem_size; i++) {
+        for (size_t j = 0; j < args.problem_size; j++) {
+            output[i*args.problem_size + j] = result[i][j];
+            }
+            }
+
       cgh.run([=, &pass]() {
 
         save_bitmap("sobel3.bmp", size, output);
-
+/*
         const float kernel[] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
         int radius = 3;
         for(size_t i = ver.begin[0]; i < ver.begin[0] + ver.range[0]; i++) {
@@ -143,7 +150,7 @@ public:
             pass = false;
             break;
           }
-        }
+        } */
       });
     });
     QueueManager::sync();
