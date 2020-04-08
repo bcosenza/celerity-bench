@@ -112,6 +112,7 @@ public:
 				}
 			});
 		});
+		QueueManager::sync();
 		return verification_passed;
 	}
 };

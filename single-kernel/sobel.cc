@@ -146,6 +146,7 @@ public:
         }
       });
     });
+    QueueManager::sync();
     return pass;
   }
 

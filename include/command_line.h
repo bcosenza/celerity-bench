@@ -88,6 +88,9 @@ public:
     static celerity::distr_queue inst;
     return inst;
   }
+  static void sync() {
+    getInstance().slow_full_sync();
+  }
   QueueManager(QueueManager const&)   = delete;
   void operator=(QueueManager const&) = delete;
 private:

@@ -32,7 +32,6 @@ public:
       output[i] = static_cast<T>(0);
      // std::cout << input1[i] << ":" << input2[i] << std::endl;
     }
-    
 
     input1_buf.initialize(input1.data(), s::range<1>(args.problem_size));
     input2_buf.initialize(input2.data(), s::range<1>(args.problem_size));
@@ -79,7 +78,8 @@ public:
           }
         }  
       });
-    });  
+    });
+    QueueManager::sync();
     std::cout << "Pass = " << verification_passed << std::endl;
     return verification_passed;
   }

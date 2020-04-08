@@ -70,7 +70,7 @@ public:
 
         b.setup();
 
-        QueueManager::getInstance().slow_full_sync();
+        QueueManager::sync();
         for(auto h : hooks) h->postSetup();
 
         std::vector<cl::sycl::event> run_events;
@@ -84,7 +84,7 @@ public:
         } else {
           b.run();
         }
-        QueueManager::getInstance().slow_full_sync();
+        QueueManager::sync();
         const auto after = std::chrono::high_resolution_clock::now();
         for(auto h : hooks) h->postKernel();
         // Performance critical measurement section ends here
@@ -114,7 +114,7 @@ public:
               if(!b.verify(args.verification)) {
                 all_runs_pass = false;
               }
-              QueueManager::getInstance().slow_full_sync();
+              QueueManager::sync();
             }
           }
         }
