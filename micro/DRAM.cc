@@ -66,10 +66,10 @@ public:
     });
   }
 
-/*  bool verify(VerificationSetting& ver) {
+  bool verify(VerificationSetting& ver) {
     bool pass = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-      auto result = output_buf.template get_access<s::access::mode::read>(cgh, cl::sycl::range<(size_t)Dims>(args.problem_size));
+      auto result = output_buf.template get_access<s::access::mode::read>(cgh, s::range<Dims>(buffer_size));
       cgh.run([=,&pass]() {
         for(size_t i = 0; i < buffer_size[0]; ++i) {
           for(size_t j = 0; j < (Dims < 2 ? 1 : buffer_size[1]); ++j) {
@@ -77,29 +77,33 @@ public:
               if constexpr(Dims == 1) {
                 if(result[i] != 33.f) {
                   pass = false;
-                  return pass;
+                  break;
                 }
               }
               if constexpr(Dims == 2) {
                 if(result[{i, j}] != 33.f) {
                   pass = false;
-                  return pass;
+                  break;
                 }
               }
               if constexpr(Dims == 3) {
                 if(result[{i, j, k}] != 33.f) {
                   pass = false;
-                  return pass;
+                  break;
                 }
               }
             }
+            if (!pass)
+                break;
           }
+          if(!pass)
+              break;
         }
       });
     });
     QueueManager::sync();
     return pass;
-  }*/
+  }
 
   static std::string getBenchmarkName() {
     std::stringstream name;
