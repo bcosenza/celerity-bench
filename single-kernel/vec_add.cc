@@ -92,8 +92,8 @@ int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
   app.run<VecAddBench<int>>();
-//  app.run<VecAddBench<long long>>();  
-//  app.run<VecAddBench<float>>();
-//  app.run<VecAddBench<double>>();
+  app.run<VecAddBench<long long>>();  
+  app.run<VecAddBench<float>>();
+  app.run<VecAddBench<double>>();
   return 0;
 }
