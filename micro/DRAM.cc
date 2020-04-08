@@ -66,7 +66,7 @@ public:
     });
   }
 
-  bool verify(VerificationSetting& ver) {
+/*  bool verify(VerificationSetting& ver) {
     bool pass = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<s::access::mode::read>(cgh, cl::sycl::range<(size_t)Dims>(args.problem_size));
@@ -99,7 +99,7 @@ public:
     });
     QueueManager::sync();
     return pass;
-  }
+  }*/
 
   static std::string getBenchmarkName() {
     std::stringstream name;
