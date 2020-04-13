@@ -21,13 +21,14 @@ protected:
   std::vector<T> input2;
   std::vector<T> output;
   BenchmarkArgs args;
+  size_t neigh_size;
 
  PrefetchedBuffer<T, 2> input1_buf;
  PrefetchedBuffer<T, 2> input2_buf;
  PrefetchedBuffer<T, 2> output_buf;
 
 public:
-  RangeMappersBench(const BenchmarkArgs &_args) : args(_args) {}
+  RangeMappersBench(const BenchmarkArgs &_args) : args(_args), neigh_size(neigh_size) {}
   
   void setup() {
     // host memory intilization
@@ -107,13 +108,13 @@ public:
     });
   }         
 
-  void run( size_t neigh_size) {
+  void run() {
   
     // Matrix addition using one_to_one ranage mapper
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using neighbourhood ranage mapper
-    neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), size_t neigh_size);
+    neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), neigh_size);
 
     // Matrix addition using slice ranage mapper
     slice(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
@@ -157,8 +158,8 @@ public:
 int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
-  //const int neigh_size = 1;
+  size_t neigh_size = 1;
 
-  app.run<RangeMappersBench<int>>(1);
+  app.run<RangeMappersBench<int>>(neigh_size);
   return 0;
 }
