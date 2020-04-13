@@ -21,14 +21,15 @@ protected:
   std::vector<T> input2;
   std::vector<T> output;
   BenchmarkArgs args;
-  size_t neigh_size;
+  size_t neigh_size_limit;
+  size_t fixed_size_limit
 
  PrefetchedBuffer<T, 2> input1_buf;
  PrefetchedBuffer<T, 2> input2_buf;
  PrefetchedBuffer<T, 2> output_buf;
 
 public:
-  RangeMappersBench(const BenchmarkArgs &_args, size_t _neigh_size) : args(_args), neigh_size(_neigh_size) {}
+  RangeMappersBench(const BenchmarkArgs &_args, size_t _neigh_size_limit, size_t _fixed_size_limit) : args(_args), neigh_size_limit(_neigh_size_limit), fixed_size_limit(_fixed_size_limit) {}
   
   void setup() {
     // host memory intilization
@@ -114,13 +115,15 @@ public:
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using neighbourhood ranage mapper
-    neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), neigh_size);
+    for (size_t neigh_size = 1; neigh_size < neigh_size_limit; neigh_size++)
+      neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), neigh_size);
 
     // Matrix addition using slice ranage mapper
     slice(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using fixed ranage mapper
-    fixed(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+    for (size_t fixed_size = 1; fixed_size < fixed_size_limit; fixed_size++)
+      fixed(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), fixed_size);
 
     // Matrix addition using all ranage mapper
     all(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
@@ -158,8 +161,9 @@ public:
 int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
-  size_t neigh_size = 1;
+  size_t neigh_size_limt = 16;
+  size_t fixed_size_limit = 4;
 
-  app.run<RangeMappersBench<int>>(neigh_size);
+  app.run<RangeMappersBench<int>>(neigh_size_limit, fixed_size_limit);
   return 0;
 }
