@@ -55,6 +55,18 @@ public:
     });
   }
 
+  void slice(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
+    queue.submit([=](celerity::handler& cgh) {
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>());
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>());
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>());
+
+      cgh.parallel_for<class NeighborhoodMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
+      });
+    });
+  }
+
   void neighborhood(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
@@ -66,6 +78,7 @@ public:
       });
     });
   }
+
 
   void fixed(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
