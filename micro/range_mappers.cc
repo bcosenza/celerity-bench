@@ -5,10 +5,13 @@ namespace s = cl::sycl;
 
 const int neigh_size = 1;
 
-const int fixed_size = 1;
+const int fixed_size = 2;
 
 template <typename T> class OneToOneMapperKernel;
 template <typename T> class NeighborhoodMapperKernel;
+template <typename T> class SliceMapperKernel;
+template <typename T> class FixedMapperKernel;
+template <typename T> class AllMapperKernel;
 
 template <typename T>
 class RangeMappersBench
@@ -57,11 +60,11 @@ public:
 
   void slice(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>());
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>());
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>());
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(0));
 
-      cgh.parallel_for<class NeighborhoodMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class SliceMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
@@ -86,7 +89,7 @@ public:
       auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
       auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
 
-      cgh.parallel_for<class NeighborhoodMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class FixedMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
@@ -98,7 +101,7 @@ public:
       auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
       auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::all<2>());
 
-      cgh.parallel_for<class NeighborhoodMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class AllMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
@@ -109,16 +112,16 @@ public:
     //celerity::distr_queue& queue = QueueManager::getInstance();
 
     // Matrix addition using one_to_one ranage mapper
-    //one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+    one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using neighbourhood ranage mapper
-    //neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+    neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using slice ranage mapper
-   // slice(queue, input1_buf.get(), input2_buf.get(), output_buf.get());
+    slice(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using fixed ranage mapper
-    //fixed(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+    fixed(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using all ranage mapper
     all(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
