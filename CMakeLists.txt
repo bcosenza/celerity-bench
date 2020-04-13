@@ -29,12 +29,14 @@ endfunction(add_benchmark)
 #add_benchmark(micro DRAM)
 #add_benchmark(micro sf)
 #add_benchmark(micro L2)
-add_benchmark(single-kernel vec_add)
+add_benchmark(micro range_mappers)
+
+#add_benchmark(single-kernel vec_add)
 #add_benchmark(single-kernel scalar_prod)
 #add_benchmark(single-kernel mol_dyn)
 #add_benchmark(single-kernel sobel)
-add_benchmark(single-kernel sobel5)
-add_benchmark(single-kernel sobel7)
+#add_benchmark(single-kernel sobel5)
+#add_benchmark(single-kernel sobel7)
 
 #add_benchmark(runtime matmulchain)
 
