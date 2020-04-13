@@ -22,7 +22,7 @@ protected:
   std::vector<T> output;
   BenchmarkArgs args;
   size_t neigh_size_limit;
-  size_t fixed_size_limit
+  size_t fixed_size_limit;
 
  PrefetchedBuffer<T, 2> input1_buf;
  PrefetchedBuffer<T, 2> input2_buf;
@@ -85,7 +85,7 @@ public:
   }
 
 
-  void fixed(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
+  void fixed(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c, size_t fixed_size) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
       auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
@@ -161,7 +161,7 @@ public:
 int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
-  size_t neigh_size_limt = 16;
+  size_t neigh_size_limit = 16;
   size_t fixed_size_limit = 4;
 
   app.run<RangeMappersBench<int>>(neigh_size_limit, fixed_size_limit);
