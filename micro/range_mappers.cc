@@ -3,7 +3,7 @@
 #include <iostream>
 namespace s = cl::sycl;
 
-const int neigh_size = 1;
+//const int neigh_size = 1;
 
 const int fixed_size = 2;
 
@@ -70,7 +70,7 @@ public:
     });
   }
 
-  void neighborhood(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
+  void neighborhood(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c, size_t neigh_size) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
       auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
@@ -107,15 +107,13 @@ public:
     });
   }         
 
-  void run() {
+  void run( size_t neigh_size) {
   
-    //celerity::distr_queue& queue = QueueManager::getInstance();
-
     // Matrix addition using one_to_one ranage mapper
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using neighbourhood ranage mapper
-    neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+    neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), size_t neigh_size);
 
     // Matrix addition using slice ranage mapper
     slice(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
@@ -159,6 +157,8 @@ public:
 int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
-  app.run<RangeMappersBench<int>>();
+  //const int neigh_size = 1;
+
+  app.run<RangeMappersBench<int>>(1);
   return 0;
 }
