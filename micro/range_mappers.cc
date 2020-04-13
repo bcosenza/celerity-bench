@@ -69,9 +69,9 @@ public:
 
   void fixed(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>(fixed_size, fixed_size));
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>(fixed_size, fixed_size));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::fixed<2>(fixed_size, fixed_size));
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
 
       cgh.parallel_for<class NeighborhoodMapperKernel<T>>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
