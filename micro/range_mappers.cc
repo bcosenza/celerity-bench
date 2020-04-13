@@ -3,7 +3,7 @@
 #include <iostream>
 namespace s = cl::sycl;
 
-#define neighborhood_size = 1
+const int neighborhood_size = 1;
 
 template <typename T> class OneToOneMapperKernel;
 template <typename T> class NeighborhoodMapperKernel;
@@ -55,7 +55,7 @@ public:
 
   void neighborhood(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neighborhood_size, neighborhood_size));
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(1, 1));
       auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neighborhood_size, neighborhood_size));
       auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::neighborhood<2>(neighborhood_size, neighborhood_size));
 
