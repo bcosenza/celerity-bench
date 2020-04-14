@@ -56,6 +56,7 @@ endfunction(add_benchmark)
 #add_benchmark(micro sf)
 #add_benchmark(micro L2)
 #add_benchmark(micro range_mappers)
+add_benchmark(micro buffers)
 
 #add_benchmark(single-kernel vec_add)
 #add_benchmark(single-kernel scalar_prod)
@@ -63,7 +64,7 @@ endfunction(add_benchmark)
 #add_benchmark(single-kernel sobel)
 #add_benchmark(single-kernel sobel5)
 #add_benchmark(single-kernel sobel7)
-add_benchmark(single-kernel matmul)
+#add_benchmark(single-kernel matmul)
 
 #add_benchmark(runtime matmulchain)
 

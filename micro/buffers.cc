@@ -76,7 +76,7 @@ public:
     });
   }
 
-  void four_buffers_map121(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 
+  void four_buffers_map121(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,  
   celerity::buffer<T, 2>& buf_c, celerity::buffer<T, 2>& buf_d,celerity::buffer<T,2>& buf_e) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -92,7 +92,7 @@ public:
     });
   } 
 
-  void six_buffers_map121(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 
+  void six_buffers_map121(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b, 
   celerity::buffer<T, 2>& buf_c, celerity::buffer<T, 2>& buf_d, celerity::buffer<T, 2>& buf_e, celerity::buffer<T, 2>& buf_f, 
   celerity::buffer<T,2>& buf_g) {
     queue.submit([=](celerity::handler& cgh) {
@@ -124,7 +124,7 @@ public:
     });
   } 
 
-  void four_buffers_mapAll(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 
+  void four_buffers_mapAll(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b, 
   celerity::buffer<T, 2>& buf_c, celerity::buffer<T, 2>& buf_d,celerity::buffer<T,2>& buf_e) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -140,7 +140,7 @@ public:
     });
   } 
 
-  void six_buffers_mapAll(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b,celerity::buffer<T, 
+  void six_buffers_mapAll(celerity::distr_queue& queue, celerity::buffer<T, 2>& buf_a, celerity::buffer<T, 2>& buf_b, 
   celerity::buffer<T, 2>& buf_c, celerity::buffer<T, 2>& buf_d, celerity::buffer<T, 2>& buf_e, celerity::buffer<T, 2>& buf_f, 
   celerity::buffer<T,2>& buf_g) {
     queue.submit([=](celerity::handler& cgh) {
@@ -163,8 +163,7 @@ public:
   void run() {
   
     // Matrix addition using one_to_one ranage mapper
-    two_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
-    input3_buf.get(), input4_buf.get(), input5_buf.get(), input6_buf.get(), output_buf.get());
+    two_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using one_to_one ranage mapper
     four_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
