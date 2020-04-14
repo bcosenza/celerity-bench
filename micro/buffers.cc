@@ -11,7 +11,7 @@ template <typename T> class FourBuffersAllMapperKernel;
 template <typename T> class SixBuffersAllMapperKernel;
 
 template <typename T>
-class RangeMappersBench
+class MultipleBuffersBench
 {
 protected:    
   std::vector<T> input1;
@@ -32,7 +32,7 @@ protected:
   PrefetchedBuffer<T, 2> output_buf;
 
 public:
-  RangeMappersBench(const BenchmarkArgs &_args) : args(_args) {}
+  MultipleBuffersBench(const BenchmarkArgs &_args) : args(_args) {}
   
   void setup() {
     // host memory intilization
@@ -193,7 +193,9 @@ public:
       cgh.run([=, &verification_passed]() {
         for(size_t i = 0; i < args.problem_size; i++){
           for (size_t j = 0; j < args.problem_size; j++) {
-            auto expected = input1[i*args.problem_size + j] + input2[i*args.problem_size + j];
+            auto expected = input1[i*args.problem_size + j] + input2[i*args.problem_size + j]+
+                            input3[i*args.problem_size + j] + input4[i*args.problem_size + j]+
+                            input5[i*args.problem_size + j] + input6[i*args.problem_size + j];
             if(expected != result[i][j]){
                 verification_passed = false;
                 break;
@@ -208,7 +210,7 @@ public:
   
   static std::string getBenchmarkName() {
     std::stringstream name;
-    name << "RangeMappers_";
+    name << "MultipleBuffers_";
     name << ReadableTypename<T>::name;
     return name.str();
   }
@@ -218,6 +220,6 @@ int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
   
-  app.run<RangeMappersBench<int>>();
+  app.run<MultipleBuffersBench<int>>();
   return 0;
 }
