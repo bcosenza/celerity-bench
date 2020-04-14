@@ -56,7 +56,7 @@ endfunction(add_benchmark)
 #add_benchmark(micro sf)
 #add_benchmark(micro L2)
 #add_benchmark(micro range_mappers)
-add_benchmark(micro buffers)
+add_benchmark(micro multiple_buffers)
 
 #add_benchmark(single-kernel vec_add)
 #add_benchmark(single-kernel scalar_prod)
