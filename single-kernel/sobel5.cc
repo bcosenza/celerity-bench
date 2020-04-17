@@ -33,7 +33,7 @@ public:
   void setup() {
     size = args.problem_size; // input size defined by the user
     input.resize(size * size);
-    load_bitmap_mirrored("../Brommy.bmp", size, input);
+    load_bitmap_mirrored(args.cli.template get<std::string>("--image-file"), size, input);
     output.resize(size * size);
 
     input_buf.initialize(input.data(), s::range<2>(size, size));

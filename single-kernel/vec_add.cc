@@ -2,20 +2,19 @@
 
 #include <iostream>
 namespace s = cl::sycl;
-template <typename T> class VecAddKernel;
+class VecAddKernel;
 
-template <typename T>
 class VecAddBench
 {
 protected:    
-  std::vector<T> input1;
-  std::vector<T> input2;
-  std::vector<T> output;
+  std::vector<BENCH_DATA_TYPE> input1;
+  std::vector<BENCH_DATA_TYPE> input2;
+  std::vector<BENCH_DATA_TYPE> output;
   BenchmarkArgs args;
 
- PrefetchedBuffer<T, 1> input1_buf;
- PrefetchedBuffer<T, 1> input2_buf;
- PrefetchedBuffer<T, 1> output_buf;
+ PrefetchedBuffer<BENCH_DATA_TYPE, 1> input1_buf;
+ PrefetchedBuffer<BENCH_DATA_TYPE, 1> input2_buf;
+ PrefetchedBuffer<BENCH_DATA_TYPE, 1> output_buf;
 
 public:
   VecAddBench(const BenchmarkArgs &_args) : args(_args) {}
@@ -27,9 +26,9 @@ public:
     output.resize(args.problem_size);
 
     for (size_t i = 0; i < args.problem_size; i++) {
-      input1[i] = static_cast<T>(i);
-      input2[i] = static_cast<T>(i);
-      output[i] = static_cast<T>(0);
+      input1[i] = static_cast<BENCH_DATA_TYPE>(i);
+      input2[i] = static_cast<BENCH_DATA_TYPE>(i);
+      output[i] = static_cast<BENCH_DATA_TYPE>(0);
      // std::cout << input1[i] << ":" << input2[i] << std::endl;
     }
 
@@ -42,9 +41,9 @@ public:
   
     celerity::distr_queue& queue = QueueManager::getInstance();
 
-    celerity::buffer<T,1>& a = input1_buf.get();
-    celerity::buffer<T,1>& b = input2_buf.get();
-    celerity::buffer<T,1>& c = output_buf.get();
+    celerity::buffer<BENCH_DATA_TYPE,1>& a = input1_buf.get();
+    celerity::buffer<BENCH_DATA_TYPE,1>& b = input2_buf.get();
+    celerity::buffer<BENCH_DATA_TYPE,1>& c = output_buf.get();
 
     queue.submit([=](celerity::handler& cgh) {
       auto in1 = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
@@ -53,7 +52,7 @@ public:
       auto out = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
       cl::sycl::range<1> ndrange {args.problem_size};
 
-      cgh.parallel_for<class VecAddKernel<T>>(ndrange,
+      cgh.parallel_for<class VecAddKernel>(ndrange,
         [=](cl::sycl::id<1> gid) 
         {
           out[gid] = in1[gid] + in2[gid];
@@ -83,7 +82,7 @@ public:
   static std::string getBenchmarkName() {
     std::stringstream name;
     name << "VectorAddition_";
-    name << ReadableTypename<T>::name;
+    name << ReadableTypename<BENCH_DATA_TYPE>::name;
     return name.str();
   }
 };
@@ -91,9 +90,6 @@ public:
 int main(int argc, char** argv)
 {
   BenchmarkApp app(argc, argv);
-  app.run<VecAddBench<int>>();
-  app.run<VecAddBench<long long>>();  
-  app.run<VecAddBench<float>>();
-  app.run<VecAddBench<double>>();
+  app.run<VecAddBench>();
   return 0;
 }

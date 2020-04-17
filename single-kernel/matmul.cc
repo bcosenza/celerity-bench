@@ -5,18 +5,16 @@
 
 // Performs matrix multiply
 
-template <typename T>
 class Matmul;
 
-template <typename T>
-void multiply(celerity::distr_queue& queue, celerity::buffer<T, 2>& mat_a, celerity::buffer<T, 2>& mat_b,
-    celerity::buffer<T, 2>& mat_c, const size_t mat_size) {
+void multiply(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_b,
+    celerity::buffer<BENCH_DATA_TYPE, 2>& mat_c, const size_t mat_size) {
 	queue.submit([=](celerity::handler& cgh) {
 		auto a = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
 		auto b = mat_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
 		auto c = mat_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
 
-		cgh.parallel_for<class Matmul<T>>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item) {
+		cgh.parallel_for<class Matmul>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item) {
 			auto sum = 0.f;
 			for(size_t k = 0; k < mat_size; ++k) {
 				const auto a_ik = a[{item[0], k}];
@@ -29,18 +27,17 @@ void multiply(celerity::distr_queue& queue, celerity::buffer<T, 2>& mat_a, celer
 }
 
 
-template <typename T>
 class Matmul {
 protected:    
-	std::vector<T> mat_a;
-	std::vector<T> mat_b;
-	std::vector<T> mat_res;
+	std::vector<BENCH_DATA_TYPE> mat_a;
+	std::vector<BENCH_DATA_TYPE> mat_b;
+	std::vector<BENCH_DATA_TYPE> mat_res;
 	BenchmarkArgs args;
 	int mat_size;
 
-	PrefetchedBuffer<T, 2> mat_a_buf;
-	PrefetchedBuffer<T, 2> mat_b_buf;
-	PrefetchedBuffer<T, 2> mat_res_buf;
+	PrefetchedBuffer<BENCH_DATA_TYPE, 2> mat_a_buf;
+	PrefetchedBuffer<BENCH_DATA_TYPE, 2> mat_b_buf;
+	PrefetchedBuffer<BENCH_DATA_TYPE, 2> mat_res_buf;
 
 public:
 	Matmul(const BenchmarkArgs &_args) : args(_args) {
@@ -48,9 +45,9 @@ public:
 	}
 
 	void setup() {
-		mat_a = std::vector<T>(mat_size * mat_size);
-		mat_b = std::vector<T>(mat_size * mat_size);
-		mat_res = std::vector<T>(mat_size * mat_size);
+		mat_a = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size);
+		mat_b = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size);
+		mat_res = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size);
 
 		// Initialize matrices to the identity
 		for(size_t i = 0; i < mat_size; ++i) {
@@ -100,5 +97,5 @@ public:
 int main(int argc, char** argv) {
 	BenchmarkApp app(argc, argv);
 	
-	app.run< Matmul<float> >();
+	app.run< Matmul >();
 }
