@@ -59,7 +59,7 @@ public:
     celerity::buffer<s::float4, 1>& c = output_buf.get();
     
     queue.submit([=](celerity::handler& cgh) {
-      auto in = a.get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
+      auto in = a.get_access<s::access::mode::read>(cgh, celerity::access::all<1>());
       auto neigh = b.get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
       auto out = c.get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
 
