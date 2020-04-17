@@ -47,7 +47,7 @@ public:
     celerity::buffer<cl::sycl::float4,2>& c = output_buf.get();
 
    queue.submit([=](celerity::handler& cgh) {
-      auto in  = a.get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto in  = a.get_access<s::access::mode::read>(cgh, celerity::access::neighborhood<2>(2, 2));
       auto out = c.get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
       cl::sycl::range<2> ndrange {size, size};
 
@@ -122,7 +122,7 @@ public:
       cgh.run([=, &pass]() {
         save_bitmap("sobel5.bmp", size, output);
 
-        const float kernel[] = { 1, 2, 0,  -2, -1,4,  8, 0,  -8, -4, 6, 12, 0, -12, -6, 4,  8, 0,  -8, -4, 1,  2, 0,  -2, -1 };
+        const float kernel[] = { 1, 2, 0,  -2, -1, 4,  8, 0,  -8, -4, 6, 12, 0, -12, -6, 4,  8, 0,  -8, -4, 1,  2, 0,  -2, -1 };
 
         bool pass = true;
         int radius = 5;

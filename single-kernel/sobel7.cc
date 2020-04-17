@@ -45,7 +45,7 @@ public:
     celerity::buffer<cl::sycl::float4,2>& c = output_buf.get();
 
     queue.submit([=](celerity::handler& cgh) {
-      auto in = a.get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto in = a.get_access<s::access::mode::read>(cgh, celerity::access::neighborhood<2>(3, 3));
       auto out = c.get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
       cl::sycl::range<2> ndrange{size, size};
 
