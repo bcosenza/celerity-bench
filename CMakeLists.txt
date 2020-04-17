@@ -17,7 +17,6 @@ include_directories(
 
 function(add_benchmark source_dir target_base_name suffix props)
   if ("${props}" MATCHES ".+")
-    message("Props is not empty")
     string(REPLACE ";" ";-D" dflags "-D${props}")
     set(target_name "${target_base_name}_${suffix}")
   else()
