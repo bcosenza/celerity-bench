@@ -41,7 +41,7 @@ public:
   void setup() {
     size = args.problem_size; // input size defined by the user
     input.resize(size * size); 
-    load_bitmap_mirrored("../share/Brommy.bmp", size, input);
+    load_bitmap_mirrored("../Brommy.bmp", size, input);
     output.resize(size * size);
 
     input_buf.initialize(input.data(), s::range<2>(size, size));    
@@ -54,7 +54,7 @@ public:
     celerity::buffer<cl::sycl::float4,2>& a = input_buf.get();
     celerity::buffer<cl::sycl::float4,2>& c = output_buf.get();
 
-    submit([=](cl::sycl::handler& cgh) {
+    submit([=](celerity::handler& cgh) {
       auto in  = a.get_access<s::access::mode::read>(cgh, celerity::access::neighborhood<2>(1, 1));
       auto out = c.get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
       cl::sycl::range<2> ndrange {size, size};
@@ -121,8 +121,8 @@ public:
        }
        );
      });
-     
-     queue.wait_and_throw();
+     QueueManager::sync();
+     //queue.wait_and_throw();
    }
 
 
