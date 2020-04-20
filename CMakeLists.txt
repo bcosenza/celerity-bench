@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 3.5)
 project(celerity-bench)
 
-#if(NOT CMAKE_BUILD_TYPE)
-#  set(CMAKE_BUILD_TYPE Release)
-#endif()
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
 find_package(celerity CONFIG REQUIRED)
 
@@ -38,28 +38,28 @@ function(add_benchmark source_dir target_base_name suffix props)
   )
 #  target_compile_definitions(${target_name} PRIVATE "BENCH_DATA_TYPE=float" PRIVATE "BENCH_DIMS=1")
 
-  add_custom_target("${target_name}_sfeatures" ALL
-    /data/nico/local/bin/syclcc-clang ${dflags}
-      --hipsycl-gpu-arch=sm_52
-      -I${CMAKE_CURRENT_SOURCE_DIR}/include/
-      -I${local_dir}/include/celerity/
-      -I${local_dir}/include/celerity/vendor/
-      -I/usr/include/mpi/
-      -c -emit-llvm
-      ${CMAKE_CURRENT_SOURCE_DIR}/${source_dir}/${target_base_name}.cc
-    COMMAND
-      ${features_script}
-      -i ${target_base_name}-cuda-nvptx64-nvidia-cuda-sm_52.bc
-      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}-cuda.sfeatures"
-      -fs gpu
-    COMMAND
-      ${features_script}
-      -i ${target_base_name}.bc
-      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}.sfeatures"
-      -fs gpu
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${target_name}_sfeatures.dir"
-    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${source_dir}/${target_base_name}.cc
-  )
+#  add_custom_target("${target_name}_sfeatures" ALL
+#    /data/nico/local/bin/syclcc-clang ${dflags}
+#      --hipsycl-gpu-arch=sm_52
+#      -I${CMAKE_CURRENT_SOURCE_DIR}/include/
+#      -I${local_dir}/include/celerity/
+#      -I${local_dir}/include/celerity/vendor/
+#      -I/usr/include/mpi/
+#      -c -emit-llvm
+#      ${CMAKE_CURRENT_SOURCE_DIR}/${source_dir}/${target_base_name}.cc
+#    COMMAND
+#      ${features_script}
+#      -i ${target_base_name}-cuda-nvptx64-nvidia-cuda-sm_52.bc
+#      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}-cuda.sfeatures"
+#      -fs gpu
+#    COMMAND
+#      ${features_script}
+#      -i ${target_base_name}.bc
+#      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}.sfeatures"
+#      -fs gpu
+#    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${target_name}_sfeatures.dir"
+#    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${source_dir}/${target_base_name}.cc
+#  )
 endfunction(add_benchmark)
 #add_benchmark(micro arith int "BENCH_DATA_TYPE=int")
 #add_benchmark(micro arith float "BENCH_DATA_TYPE=float")
@@ -102,13 +102,13 @@ endfunction(add_benchmark)
 add_benchmark(single-kernel matmul float "BENCH_DATA_TYPE=float")
 add_benchmark(single-kernel median _ "")
 add_benchmark(single-kernel mol_dyn _ "")
-add_benchmark(single-kernel vec_add int "BENCH_DATA_TYPE=int")
-add_benchmark(single-kernel vec_add long_long "BENCH_DATA_TYPE=long long")
-add_benchmark(single-kernel vec_add float "BENCH_DATA_TYPE=float")
-add_benchmark(single-kernel vec_add double "BENCH_DATA_TYPE=double")
+#add_benchmark(single-kernel vec_add int "BENCH_DATA_TYPE=int")
+#add_benchmark(single-kernel vec_add long_long "BENCH_DATA_TYPE=long long")
+#add_benchmark(single-kernel vec_add float "BENCH_DATA_TYPE=float")
+#add_benchmark(single-kernel vec_add double "BENCH_DATA_TYPE=double")
 add_benchmark(single-kernel sobel _ "")
-add_benchmark(single-kernel sobel5 _ "")
-add_benchmark(single-kernel sobel7 _ "")
+#add_benchmark(single-kernel sobel5 _ "")
+#add_benchmark(single-kernel sobel7 _ "")
 
 # needs ndrange support in celerity:
 #add_benchmark(single-kernel scalar_prod)
