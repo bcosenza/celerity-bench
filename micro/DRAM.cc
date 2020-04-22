@@ -8,11 +8,11 @@ class CopyBufferDummyKernel;
 
 s::range<BENCH_DIMS> getBufferSize(size_t problemSize) {
 #if BENCH_DIMS == 1
-  return s::range<1>(problemSize * problemSize * problemSize / sizeof(BENCH_DATA_TYPE));
+  return s::range<1>(problemSize);
 #elif BENCH_DIMS == 2
-  return s::range<2>(problemSize * problemSize / sizeof(BENCH_DATA_TYPE), problemSize);
+  return s::range<2>(problemSize, problemSize);
 #elif BENCH_DIMS == 3
-  return s::range<3>(problemSize / sizeof(BENCH_DATA_TYPE), problemSize, problemSize);
+  return s::range<3>(problemSize, problemSize, problemSize);
 #endif
 }
 

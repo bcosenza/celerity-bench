@@ -21,12 +21,12 @@ protected:
   PrefetchedBuffer<BENCH_DATA_TYPE, 2> input1_buf;
   PrefetchedBuffer<BENCH_DATA_TYPE, 2> input2_buf;
   PrefetchedBuffer<BENCH_DATA_TYPE, 2> output_buf;
-#if (BENCH_MODE == FOUR_BUFFERS_121) || (BENCH_MODE == FOUR_BUFFERS_ALL)
+#if BENCH_BUFFERS >= 4
   std::vector<BENCH_DATA_TYPE> input3;
   std::vector<BENCH_DATA_TYPE> input4;
   PrefetchedBuffer<BENCH_DATA_TYPE, 2> input3_buf;
   PrefetchedBuffer<BENCH_DATA_TYPE, 2> input4_buf;
-#if (BENCH_MODE == SIX_BUFFERS_121) || (BENCH_MODE == SIX_BUFFERS_ALL)
+#if BENCH_BUFFERS == 6
   std::vector<BENCH_DATA_TYPE> input5;
   std::vector<BENCH_DATA_TYPE> input6;    
   PrefetchedBuffer<BENCH_DATA_TYPE, 2> input5_buf;
@@ -42,10 +42,10 @@ public:
     input1.resize(args.problem_size*args.problem_size);
     input2.resize(args.problem_size*args.problem_size);
     output.resize(args.problem_size*args.problem_size);
-#if (BENCH_MODE == FOUR_BUFFERS_121) || (BENCH_MODE == FOUR_BUFFERS_ALL)
+#if BENCH_BUFFERS >= 4
     input3.resize(args.problem_size*args.problem_size);
     input4.resize(args.problem_size*args.problem_size);
-#if (BENCH_MODE == SIX_BUFFERS_121) || (BENCH_MODE == SIX_BUFFERS_ALL)
+#if BENCH_BUFFERS == 6
     input5.resize(args.problem_size*args.problem_size);
     input6.resize(args.problem_size*args.problem_size);
 #endif
@@ -55,10 +55,10 @@ public:
       input1[i] = static_cast<BENCH_DATA_TYPE>(i);
       input2[i] = static_cast<BENCH_DATA_TYPE>(i);
       output[i] = static_cast<BENCH_DATA_TYPE>(0);
-#if (BENCH_MODE == FOUR_BUFFERS_121) || (BENCH_MODE == FOUR_BUFFERS_ALL)
+#if BENCH_BUFFERS >= 4
       input3[i] = static_cast<BENCH_DATA_TYPE>(i);
       input4[i] = static_cast<BENCH_DATA_TYPE>(i);
-#if (BENCH_MODE == SIX_BUFFERS_121) || (BENCH_MODE == SIX_BUFFERS_ALL)
+#if BENCH_BUFFERS == 6
       input5[i] = static_cast<BENCH_DATA_TYPE>(i);
       input6[i] = static_cast<BENCH_DATA_TYPE>(i);            
 #endif
@@ -68,17 +68,17 @@ public:
     input1_buf.initialize(input1.data(), s::range<2>(args.problem_size, args.problem_size));
     input2_buf.initialize(input2.data(), s::range<2>(args.problem_size, args.problem_size));
     output_buf.initialize(output.data(), s::range<2>(args.problem_size, args.problem_size));
-#if (BENCH_MODE == FOUR_BUFFERS_121) || (BENCH_MODE == FOUR_BUFFERS_ALL)
+#if BENCH_BUFFERS >= 4
     input3_buf.initialize(input3.data(), s::range<2>(args.problem_size, args.problem_size));
     input4_buf.initialize(input4.data(), s::range<2>(args.problem_size, args.problem_size));
-#if (BENCH_MODE == SIX_BUFFERS_121) || (BENCH_MODE == SIX_BUFFERS_ALL)
+#if BENCH_BUFFERS == 6
     input5_buf.initialize(input5.data(), s::range<2>(args.problem_size, args.problem_size));
     input6_buf.initialize(input6.data(), s::range<2>(args.problem_size, args.problem_size)); 
 #endif
 #endif
   }
 
-#if BENCH_MODE == TWO_BUFFERS_121
+#if BENCH_BUFFERS == 2 && defined(BENCH_MODE_121)
   void two_buffers_map121(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -90,7 +90,7 @@ public:
       });
     });
   }
-#elif BENCH_MODE == FOUR_BUFFERS_121
+#elif BENCH_BUFFERS == 4 && defined(BENCH_MODE_121)
   void four_buffers_map121(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,  
   celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_d,celerity::buffer<BENCH_DATA_TYPE,2>& buf_e) {
     queue.submit([=](celerity::handler& cgh) {
@@ -106,7 +106,7 @@ public:
       });
     });
   } 
-#elif BENCH_MODE == SIX_BUFFERS_121
+#elif BENCH_BUFFERS == 6 && defined(BENCH_MODE_121)
   void six_buffers_map121(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b, 
   celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_d, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_e, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_f, 
   celerity::buffer<BENCH_DATA_TYPE,2>& buf_g) {
@@ -126,7 +126,7 @@ public:
       });
     });
   }   
-#elif BENCH_MODE == TWO_BUFFERS_ALL
+#elif BENCH_BUFFERS == 2 && defined(BENCH_MODE_ALL)
   void two_buffers_mapAll(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -138,7 +138,7 @@ public:
       });
     });
   } 
-#elif BENCH_MODE == FOUR_BUFFERS_ALL
+#elif BENCH_BUFFERS == 4 && defined(BENCH_MODE_ALL)
   void four_buffers_mapAll(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b, 
   celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_d,celerity::buffer<BENCH_DATA_TYPE,2>& buf_e) {
     queue.submit([=](celerity::handler& cgh) {
@@ -154,7 +154,7 @@ public:
       });
     });
   } 
-#elif BENCH_MODE == SIX_BUFFERS_ALL
+#elif BENCH_BUFFERS == 6 && defined(BENCH_MODE_ALL)
   void six_buffers_mapAll(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b, 
   celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_d, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_e, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_f, 
   celerity::buffer<BENCH_DATA_TYPE,2>& buf_g) {
@@ -177,25 +177,25 @@ public:
 #endif
 
   void run() {
-#if BENCH_MODE == TWO_BUFFERS_121
+#if BENCH_BUFFERS == 2 && defined(BENCH_MODE_121)
     // Matrix addition using one_to_one ranage mapper
     two_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
-#elif BENCH_MODE == FOUR_BUFFERS_121
+#elif BENCH_BUFFERS == 4 && defined(BENCH_MODE_121)
     // Matrix addition using one_to_one ranage mapper
     four_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
     input3_buf.get(), input4_buf.get(), output_buf.get());
-#elif BENCH_MODE == SIX_BUFFERS_121
+#elif BENCH_BUFFERS == 6 && defined(BENCH_MODE_121)
     // Matrix addition using one_to_one ranage mapper
     six_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
     input3_buf.get(), input4_buf.get(), input5_buf.get(), input6_buf.get(), output_buf.get());         
-#elif BENCH_MODE == TWO_BUFFERS_ALL
+#elif BENCH_BUFFERS == 2 && defined(BENCH_MODE_ALL)
     // Matrix addition using all ranage mapper
     two_buffers_mapAll(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
-#elif BENCH_MODE == FOUR_BUFFERS_ALL
+#elif BENCH_BUFFERS == 4 && defined(BENCH_MODE_ALL)
     // Matrix addition using all ranage mapper
     four_buffers_mapAll(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
      input3_buf.get(), input4_buf.get(), output_buf.get());   
-#elif BENCH_MODE == SIX_BUFFERS_ALL
+#elif BENCH_BUFFERS == 6 && defined(BENCH_MODE_ALL)
     // Matrix addition using all ranage mapper
     six_buffers_mapAll(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
     input3_buf.get(), input4_buf.get(), input5_buf.get(), input6_buf.get(), output_buf.get());     
@@ -209,9 +209,14 @@ public:
       cgh.run([=, &verification_passed]() {
         for(size_t i = 0; i < args.problem_size; i++){
           for (size_t j = 0; j < args.problem_size; j++) {
-            auto expected = input1[i*args.problem_size + j] + input2[i*args.problem_size + j]+
-                            input3[i*args.problem_size + j] + input4[i*args.problem_size + j]+
-                            input5[i*args.problem_size + j] + input6[i*args.problem_size + j];
+            auto expected = input1[i*args.problem_size + j] + input2[i*args.problem_size + j]
+#if BENCH_BUFFERS >= 4
+                            +input3[i*args.problem_size + j] + input4[i*args.problem_size + j]
+#if BENCH_BUFFERS == 6
+                            +input5[i*args.problem_size + j] + input6[i*args.problem_size + j]
+#endif
+#endif
+                            ;
             if(expected != result[i][j]){
                 verification_passed = false;
                 break;

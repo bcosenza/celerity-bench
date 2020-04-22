@@ -47,7 +47,7 @@ public:
     output_buf.initialize(output.data(), s::range<2>(args.problem_size, args.problem_size));
   }
 
-#if BENCH_MAPPER == ONE_TO_ONE 
+#if defined(BENCH_MAPPER_ONE_TO_ONE)
   void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -59,7 +59,7 @@ public:
       });
     });
   }
-#elif BENCH_MAPPER == SLICE
+#elif defined(BENCH_MAPPER_SLICE)
   void slice(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
@@ -71,7 +71,7 @@ public:
       });
     });
   }
-#elif BENCH_MAPPER == NEIGHBOURHOOD
+#elif defined(BENCH_MAPPER_NEIGHBOURHOOD)
   void neighborhood(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, size_t neigh_size) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
@@ -84,7 +84,7 @@ public:
     });
   }
 
-#elif BENCH_MAPPER == FIXED
+#elif defined(BENCH_MAPPER_FIXED)
   void fixed(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, size_t fixed_size) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
@@ -97,7 +97,7 @@ public:
     });
   }
 
-#elif BENCH_MAPPER == ALL
+#elif defined(BENCH_MAPPER_ALL)
   void all(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -112,21 +112,21 @@ public:
 #endif
 
   void run() {
-#if BENCH_MAPPER == ONE_TO_ONE 
+#if defined(BENCH_MAPPER_ONE_TO_ONE)
     // Matrix addition using one_to_one ranage mapper
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
-#elif BENCH_MAPPER == NEIGHBOURHOOD
+#elif defined(BENCH_MAPPER_NEIGHBOURHOOD)
     // Matrix addition using neighbourhood ranage mapper
     for (size_t neigh_size = 1; neigh_size < neigh_size_limit; neigh_size++)
       neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), neigh_size);
-#elif BENCH_MAPPER == SLICE
+#elif defined(BENCH_MAPPER_SLICE)
     // Matrix addition using slice ranage mapper
     slice(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
-#elif BENCH_MAPPER == FIXED
+#elif defined(BENCH_MAPPER_FIXED)
     // Matrix addition using fixed ranage mapper
     for (size_t fixed_size = 1; fixed_size < fixed_size_limit; fixed_size++)
       fixed(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), fixed_size);
-#elif BENCH_MAPPER == ALL
+#elif defined(BENCH_MAPPER_ALL)
     // Matrix addition using all ranage mapper
     all(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 #endif
