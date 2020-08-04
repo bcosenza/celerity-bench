@@ -113,21 +113,21 @@ public:
 
   void run() {
 #if defined(BENCH_MAPPER_ONE_TO_ONE)
-    // Matrix addition using one_to_one ranage mapper
+    // Matrix addition using one_to_one range mapper
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 #elif defined(BENCH_MAPPER_NEIGHBOURHOOD)
-    // Matrix addition using neighbourhood ranage mapper
+    // Matrix addition using neighbourhood range mapper
     for (size_t neigh_size = 1; neigh_size < neigh_size_limit; neigh_size++)
       neighborhood(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), neigh_size);
 #elif defined(BENCH_MAPPER_SLICE)
-    // Matrix addition using slice ranage mapper
+    // Matrix addition using slice range mapper
     slice(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 #elif defined(BENCH_MAPPER_FIXED)
-    // Matrix addition using fixed ranage mapper
+    // Matrix addition using fixed range mapper
     for (size_t fixed_size = 1; fixed_size < fixed_size_limit; fixed_size++)
       fixed(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get(), fixed_size);
 #elif defined(BENCH_MAPPER_ALL)
-    // Matrix addition using all ranage mapper
+    // Matrix addition using all range mapper
     all(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 #endif
   }
