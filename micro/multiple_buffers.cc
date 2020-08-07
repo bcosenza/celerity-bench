@@ -178,25 +178,25 @@ public:
 
   void run() {
 #if BENCH_BUFFERS == 2 && defined(BENCH_MODE_121)
-    // Matrix addition using one_to_one ranage mapper
+    // Matrix addition using one_to_one range mapper
     two_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 #elif BENCH_BUFFERS == 4 && defined(BENCH_MODE_121)
-    // Matrix addition using one_to_one ranage mapper
+    // Matrix addition using one_to_one range mapper
     four_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
     input3_buf.get(), input4_buf.get(), output_buf.get());
 #elif BENCH_BUFFERS == 6 && defined(BENCH_MODE_121)
-    // Matrix addition using one_to_one ranage mapper
+    // Matrix addition using one_to_one range mapper
     six_buffers_map121(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
     input3_buf.get(), input4_buf.get(), input5_buf.get(), input6_buf.get(), output_buf.get());         
 #elif BENCH_BUFFERS == 2 && defined(BENCH_MODE_ALL)
-    // Matrix addition using all ranage mapper
+    // Matrix addition using all range mapper
     two_buffers_mapAll(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 #elif BENCH_BUFFERS == 4 && defined(BENCH_MODE_ALL)
-    // Matrix addition using all ranage mapper
+    // Matrix addition using all range mapper
     four_buffers_mapAll(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
      input3_buf.get(), input4_buf.get(), output_buf.get());   
 #elif BENCH_BUFFERS == 6 && defined(BENCH_MODE_ALL)
-    // Matrix addition using all ranage mapper
+    // Matrix addition using all range mapper
     six_buffers_mapAll(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), 
     input3_buf.get(), input4_buf.get(), input5_buf.get(), input6_buf.get(), output_buf.get());     
 #endif
