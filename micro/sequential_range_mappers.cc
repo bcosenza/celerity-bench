@@ -21,7 +21,7 @@ protected:
  PrefetchedBuffer<BENCH_DATA_TYPE, 2> output_buf;
 
 public:
-  RangeMappersBench(const BenchmarkArgs &_args, size_t _neigh_size_limit, size_t _fixed_size_limit) : args(_args), neigh_size_limit(_neigh_size_limit), fixed_size_limit(_fixed_size_limit) {}
+  RangeMappersBench(const BenchmarkArgs &_args) : args(_args) {}
   
   void setup() {
     // host memory intilization
