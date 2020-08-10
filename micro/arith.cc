@@ -61,7 +61,7 @@ public:
             BENCH_DATA_TYPE a1 = in[gid];
             const BENCH_DATA_TYPE a2 = a1;
 
-            for(int i = 0; i < 512; ++i) {
+            for(int i = 0; i < Iterations; ++i) {
               // We do two operations to ensure the value remains 1 and doesn't grow indefinitely.
               a1 = a1 * a1 + a1;
               a1 = a1 * a2 - a2;
@@ -101,7 +101,7 @@ public:
 int main(int argc, char** argv) {
   BenchmarkApp app(argc, argv);
 
-  app.run<MicroBenchArithmetic<>>();
+  app.run<MicroBenchArithmetic<BENCH_COMP_ITERS>>();
 
   // app.run<MicroBenchArithmetic<int>>();
   // app.run<MicroBenchArithmetic<float>>();

@@ -5,7 +5,6 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
@@ -49,31 +48,46 @@ function(add_benchmark source_dir target_base_name suffix props)
 #      -I${local_dir}/include/celerity/
 #      -I${local_dir}/include/celerity/vendor/
 #      -I/usr/include/mpi/
-#      -c -emit-llvm
+#      ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}
+#      -c -emit-llvm -S
 #      ${CMAKE_CURRENT_SOURCE_DIR}/${source_dir}/${target_base_name}.cc
 #    COMMAND
 #      ${features_script}
-#      -i ${target_base_name}-cuda-nvptx64-nvidia-cuda-sm_52.bc
+#      -i ${target_base_name}-cuda-nvptx64-nvidia-cuda-sm_52.ll
 #      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}-cuda.sfeatures"
-#      -fs gpu
-#    COMMAND
-#      ${features_script}
-#      -i ${target_base_name}.bc
-#      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}.sfeatures"
-#      -fs gpu
+#      -fs gpu -fe kofler
+##    COMMAND
+##      ${features_script}
+##      -i ${target_base_name}.bc
+##      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}.sfeatures"
+##      -fs gpu
 #    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${target_name}_sfeatures.dir"
 #    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${source_dir}/${target_base_name}.cc
 #  )
 endfunction(add_benchmark)
-add_benchmark(micro arith int "BENCH_DATA_TYPE=int")
-add_benchmark(micro arith float "BENCH_DATA_TYPE=float")
-add_benchmark(micro arith double "BENCH_DATA_TYPE=double")
+#add_benchmark(micro arith int_8 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=8")
+add_benchmark(micro arith int_16 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=16")
+add_benchmark(micro arith int_32 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=32")
+add_benchmark(micro arith int_64 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=64")
+add_benchmark(micro arith int_128 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=128")
+add_benchmark(micro arith int_256 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=256")
+add_benchmark(micro arith int_512 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=512")
+#add_benchmark(micro arith int_1024 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=1024")
+#add_benchmark(micro arith float_8 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=8")
+add_benchmark(micro arith float_16 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=16")
+add_benchmark(micro arith float_32 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=32")
+add_benchmark(micro arith float_64 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=64")
+add_benchmark(micro arith float_128 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=128")
+add_benchmark(micro arith float_256 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=256")
+add_benchmark(micro arith float_512 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=512")
+#add_benchmark(micro arith float_1024 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=1024")
+#add_benchmark(micro arith double "BENCH_DATA_TYPE=double")
 add_benchmark(micro DRAM float_1d "BENCH_DATA_TYPE=float;BENCH_DIMS=1")
 add_benchmark(micro DRAM float_2d "BENCH_DATA_TYPE=float;BENCH_DIMS=2")
 add_benchmark(micro DRAM float_3d "BENCH_DATA_TYPE=float;BENCH_DIMS=3")
-add_benchmark(micro DRAM double_1d "BENCH_DATA_TYPE=double;BENCH_DIMS=1")
-add_benchmark(micro DRAM double_2d "BENCH_DATA_TYPE=double;BENCH_DIMS=2")
-add_benchmark(micro DRAM double_3d "BENCH_DATA_TYPE=double;BENCH_DIMS=3")
+#add_benchmark(micro DRAM double_1d "BENCH_DATA_TYPE=double;BENCH_DIMS=1")
+#add_benchmark(micro DRAM double_2d "BENCH_DATA_TYPE=double;BENCH_DIMS=2")
+#add_benchmark(micro DRAM double_3d "BENCH_DATA_TYPE=double;BENCH_DIMS=3")
 add_benchmark(micro L2 int_1 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=1")
 add_benchmark(micro L2 int_2 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=2")
 add_benchmark(micro L2 int_4 "BENCH_DATA_TYPE=int;BENCH_COMP_ITERS=4")
@@ -84,13 +98,13 @@ add_benchmark(micro L2 float_2 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=2")
 add_benchmark(micro L2 float_4 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=4")
 add_benchmark(micro L2 float_8 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=8")
 add_benchmark(micro L2 float_16 "BENCH_DATA_TYPE=float;BENCH_COMP_ITERS=16")
-add_benchmark(micro L2 double_1 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=1")
-add_benchmark(micro L2 double_2 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=2")
-add_benchmark(micro L2 double_4 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=4")
-add_benchmark(micro L2 double_8 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=8")
-add_benchmark(micro L2 double_16 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=16")
-add_benchmark(micro sf float "BENCH_DATA_TYPE=float")
-add_benchmark(micro sf double "BENCH_DATA_TYPE=double")
+#add_benchmark(micro L2 double_1 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=1")
+#add_benchmark(micro L2 double_2 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=2")
+#add_benchmark(micro L2 double_4 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=4")
+#add_benchmark(micro L2 double_8 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=8")
+#add_benchmark(micro L2 double_16 "BENCH_DATA_TYPE=double;BENCH_COMP_ITERS=16")
+#add_benchmark(micro sf float "BENCH_DATA_TYPE=float")
+#add_benchmark(micro sf double "BENCH_DATA_TYPE=double")
 add_benchmark(micro multiple_buffers two_121 "BENCH_DATA_TYPE=int; BENCH_BUFFERS=2;BENCH_MODE_121")
 add_benchmark(micro multiple_buffers four_121 "BENCH_DATA_TYPE=int;BENCH_BUFFERS=4;BENCH_MODE_121")
 add_benchmark(micro multiple_buffers six_121 "BENCH_DATA_TYPE=int; BENCH_BUFFERS=6;BENCH_MODE_121")
