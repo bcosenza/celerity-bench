@@ -18,6 +18,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 
+add_subdirectory(polybench)
+
 function(add_benchmark source_dir target_base_name suffix props)
   if ("${props}" MATCHES ".+")
     string(REPLACE ";" ";-D" dflags "-D${props}")
