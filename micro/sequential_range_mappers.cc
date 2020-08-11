@@ -4,6 +4,9 @@
 namespace s = cl::sycl;
 
 class OneToOneMapperKernel;
+class NeighborhoodMapperKernel;
+class SliceMapperKernelX;
+class FixedMapperKernelY;
 class AllMapperKernel;
 
 class RangeMappersBench
@@ -39,7 +42,7 @@ public:
     input2_buf.initialize(input2.data(), s::range<2>(args.problem_size, args.problem_size));
     output_buf.initialize(output.data(), s::range<2>(args.problem_size, args.problem_size));
   }
-#if defined(BENCH_MAPPER_ONE_TO_ONE) 
+#if defined(BENCH_MAPPER_ONE_TO_ONE_ALL) 
   void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -95,7 +98,7 @@ public:
   }
 #endif
 
-#if defined(BENCH_MAPPER_ALL) 
+#if defined(BENCH_MAPPER_ONE_TO_ONE_ALL) 
   void all(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -110,11 +113,14 @@ public:
 #endif
 
   void run() {
+
+    #if defined(BENCH_MAPPER_ONE_TO_ONE_ALL)
     // Matrix addition using one_to_one range mapper
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using all range mapper
     all(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+    #endif
   }
 
   bool verify(VerificationSetting &ver) {

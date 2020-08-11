@@ -120,6 +120,8 @@ add_benchmark(micro range_mappers slice "BENCH_DATA_TYPE=int;BENCH_MAPPER_SLICE"
 add_benchmark(micro range_mappers fixed "BENCH_DATA_TYPE=int;BENCH_MAPPER_FIXED")
 add_benchmark(micro range_mappers all "BENCH_DATA_TYPE=int;BENCH_MAPPER_ALL")
 
+add_benchmark(micro sequential_range_mappers one_to_one_all "BENCH_DATA_TYPE=int;BENCH_MAPPER_ONE_TO_ONE_ALL")
+
 add_benchmark(single-kernel matmul float "BENCH_DATA_TYPE=float")
 add_benchmark(single-kernel median _ "")
 add_benchmark(single-kernel mol_dyn _ "")
