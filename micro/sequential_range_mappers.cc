@@ -60,7 +60,7 @@ public:
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
       auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-      auto c = buf_c.template get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::all<2>());
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
 
       cgh.parallel_for<class AllMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
@@ -123,7 +123,9 @@ public:
     // a = b+c
     all(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get());
     #endif
-    
+  
+  // QueueManager::sync();  
+  
   }
 
   bool verify(VerificationSetting &ver) {
@@ -136,7 +138,7 @@ public:
             auto temp = input1[i*args.problem_size + j] + input2[i*args.problem_size + j];
             auto expected = input2[i*args.problem_size + j] + temp;
            
-            std::cout << expected << "," << result[i][j] << std::endl;
+           // std::cout << expected << "," << result[i][j] << std::endl;
 
             if(expected != result[i][j]){
                 verification_passed = false;
