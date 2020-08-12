@@ -68,9 +68,8 @@ public:
     });
   }
 
-#endif
 
-#if defined(BENCH_MAPPER_ONE_TO_ONE_NEIGHBOURHOOD) 
+#elif defined(BENCH_MAPPER_ONE_TO_ONE_NEIGHBOURHOOD) 
   void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -95,9 +94,8 @@ public:
     });
   }
 
-#endif
 
-#if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX) 
+#elif defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX) 
   void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -122,9 +120,7 @@ public:
     });
   }
 
-#endif
-
-#if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX) 
+#elif defined(BENCH_MAPPER_ONE_TO_ONE_SLICEY) 
   void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -162,9 +158,8 @@ public:
     // Matrix addition using all range mapper
     // a = b+c
     all(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get());
-    #endif
-
-    #if defined(BENCH_MAPPER_ONE_TO_ONE_NEIGHBOURHOOD)
+    
+    #elif defined(BENCH_MAPPER_ONE_TO_ONE_NEIGHBOURHOOD)
     // Matrix addition using one_to_one range mapper
     // c = a+b
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
@@ -172,9 +167,8 @@ public:
     // Matrix addition using neighbourhood range mapper
     // a = b+c
     neighborhood(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get(), 3);
-    #endif
-
-    #if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX)
+    
+    #elif defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX)
     // Matrix addition using one_to_one range mapper
     // c = a+b
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
@@ -182,9 +176,8 @@ public:
     // Matrix addition using slice range mapper
     // a = b+c
     slicex(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get());
-    #endif  
-
-    #if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEY)
+   
+    #elif defined(BENCH_MAPPER_ONE_TO_ONE_SLICEY)
     // Matrix addition using one_to_one range mapper
     // c = a+b
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
