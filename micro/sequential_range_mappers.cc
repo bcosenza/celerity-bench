@@ -70,47 +70,87 @@ public:
 
 #endif
 
-#if defined(BENCH_MAPPER_SLICE_X)
-  void slicex(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+#if defined(BENCH_MAPPER_ONE_TO_ONE_NEIGHBOURHOOD) 
+  void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(0));
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
 
-      cgh.parallel_for<class SliceMapperKernelX>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class OneToOneMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
   }
-#endif  
 
-#if defined(BENCH_MAPPER_SLICE_Y)
-  void slicey(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
-    queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(1));
-
-      cgh.parallel_for<class SliceMapperKernelY>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
-        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
-      });
-    });
-  }
-#endif
-
-#if defined(BENCH_MAPPER_NEIGHBOURHOOD)
   void neighborhood(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, size_t neigh_size) {
     queue.submit([=](celerity::handler& cgh) {
       auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
       auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
 
       cgh.parallel_for<class NeighborhoodMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
   }
+
 #endif
+
+#if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX) 
+  void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+    queue.submit([=](celerity::handler& cgh) {
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
+
+      cgh.parallel_for<class OneToOneMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
+      });
+    });
+  }
+
+  void slicex(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+    queue.submit([=](celerity::handler& cgh) {
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
+
+      cgh.parallel_for<class SliceMapperKernelX>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
+      });
+    });
+  }
+
+#endif
+
+#if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX) 
+  void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+    queue.submit([=](celerity::handler& cgh) {
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
+
+      cgh.parallel_for<class OneToOneMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
+      });
+    });
+  }
+
+  void slicey(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+    queue.submit([=](celerity::handler& cgh) {
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
+      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
+
+      cgh.parallel_for<class SliceMapperKernelY>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
+      });
+    });
+  }
+
+#endif
+
 
   void run() {
 
@@ -123,7 +163,37 @@ public:
     // a = b+c
     all(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get());
     #endif
-  
+
+    #if defined(BENCH_MAPPER_ONE_TO_ONE_NEIGHBOURHOOD)
+    // Matrix addition using one_to_one range mapper
+    // c = a+b
+    one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+
+    // Matrix addition using neighbourhood range mapper
+    // a = b+c
+    neighborhood(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get(), 3);
+    #endif
+
+    #if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEX)
+    // Matrix addition using one_to_one range mapper
+    // c = a+b
+    one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+
+    // Matrix addition using slice range mapper
+    // a = b+c
+    slicex(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get());
+    #endif  
+
+    #if defined(BENCH_MAPPER_ONE_TO_ONE_SLICEY)
+    // Matrix addition using one_to_one range mapper
+    // c = a+b
+    one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+
+    // Matrix addition using slice range mapper
+    // a = b+c
+    slicey(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get());
+    #endif        
+
   // QueueManager::sync();  
   
   }
