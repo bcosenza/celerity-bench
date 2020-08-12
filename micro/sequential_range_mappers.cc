@@ -42,6 +42,7 @@ public:
     input2_buf.initialize(input2.data(), s::range<2>(args.problem_size, args.problem_size));
     output_buf.initialize(output.data(), s::range<2>(args.problem_size, args.problem_size));
   }
+
 #if defined(BENCH_MAPPER_ONE_TO_ONE_ALL) 
   void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
     queue.submit([=](celerity::handler& cgh) {
@@ -54,6 +55,19 @@ public:
       });
     });
   }
+
+  void all(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+    queue.submit([=](celerity::handler& cgh) {
+      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
+      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
+      auto c = buf_c.template get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::all<2>());
+
+      cgh.parallel_for<class AllMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
+      });
+    });
+  }
+
 #endif
 
 #if defined(BENCH_MAPPER_SLICE_X)
@@ -98,39 +112,32 @@ public:
   }
 #endif
 
-#if defined(BENCH_MAPPER_ONE_TO_ONE_ALL) 
-  void all(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
-    queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::all<2>());
-
-      cgh.parallel_for<class AllMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
-        c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
-      });
-    });
-  }
-#endif
-
   void run() {
 
     #if defined(BENCH_MAPPER_ONE_TO_ONE_ALL)
     // Matrix addition using one_to_one range mapper
+    // c = a+b
     one_to_one(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
 
     // Matrix addition using all range mapper
-    all(QueueManager::getInstance(), input1_buf.get(), input2_buf.get(), output_buf.get());
+    // a = b+c
+    all(QueueManager::getInstance(), input2_buf.get(), output_buf.get(), input1_buf.get());
     #endif
+    
   }
 
   bool verify(VerificationSetting &ver) {
     bool verification_passed = true;
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-      auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(args.problem_size, args.problem_size));
+      auto result = input1_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(args.problem_size, args.problem_size));
       cgh.run([=, &verification_passed]() {
         for(size_t i = 0; i < args.problem_size; i++){
           for (size_t j = 0; j < args.problem_size; j++) {
-            auto expected = input1[i*args.problem_size + j] + input2[i*args.problem_size + j];
+            auto temp = input1[i*args.problem_size + j] + input2[i*args.problem_size + j];
+            auto expected = input2[i*args.problem_size + j] + temp;
+           
+            std::cout << expected << "," << result[i][j] << std::endl;
+
             if(expected != result[i][j]){
                 verification_passed = false;
                 break;
