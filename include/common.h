@@ -10,6 +10,8 @@
 #include <type_traits>
 #include <unordered_set>
 #include <optional>
+#include <iomanip>
+#include <limits>
 
 #include "command_line.h"
 #include "result_consumer.h"
@@ -225,3 +227,21 @@ public:
     }
   }
 };
+
+
+template<class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+almost_equal(T x, T y, int units_last_place)
+{
+    return std::fabs(x-y) <= std::numeric_limits<T>::epsilon() * std::fabs(x+y) * units_last_place
+            || std::fabs(x-y) < std::numeric_limits<T>::min();
+}
+
+
+template<class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+almost_equal(T x, T y, float EPS)
+{
+    return std::fabs(x-y) <= EPS
+           || std::fabs(x-y) < std::numeric_limits<T>::min();
+}
