@@ -5,6 +5,24 @@ class Jacobi_2d;
 
 using BENCH_DATA_TYPE = float;
 
+void jacobi2d(
+        celerity::distr_queue& queue,
+        celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a,
+        celerity::buffer<BENCH_DATA_TYPE, 2>& mat_res,
+        const size_t mat_size
+        ){
+        queue.submit([=](celerity::handler& cgh) {
+            auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(1,1));
+            auto RES = mat_res.template get_access<cl::sycl::access::mode::write>(cgh, celerity::access::neighborhood<2>(1,1));
+
+            cgh.parallel_for<class Jacobi_2d>(cl::sycl::range<2> (mat_size - 1, mat_size - 1), cl::sycl::id<2> {1,1}, [=](cl::sycl::item<2> item) {
+                auto i = item[0];
+                auto j = item[1];
+                RES[i][j] = 0.2 * (A[i][j] + A[i][j-1] + A[i][1+j] + A[1+i][j] + A[i-1][j]);
+            });
+        });
+}
+
 class Jacobi_2d {
 protected:
     std::vector<BENCH_DATA_TYPE> mat_a;
@@ -35,17 +53,9 @@ public:
     }
 
     void run() {
-        celerity::distr_queue& queue = QueueManager::getInstance();
-        queue.submit([=](celerity::handler& cgh) {
-            auto A = mat_a_buf.get().template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(1,1));
-            auto RES = mat_res_buf.get().template get_access<cl::sycl::access::mode::write>(cgh, celerity::access::neighborhood<2>(1,1));
-
-            cgh.parallel_for<class Jacobi_2d>(cl::sycl::range<2> (mat_size - 1, mat_size - 1), cl::sycl::id<2> {1,1}, [=](cl::sycl::item<2> item) {
-                auto i = item[0];
-                auto j = item[1];
-                RES[i][j] = 0.2 * (A[i][j] + A[i][j-1] + A[i][1+j] + A[1+i][j] + A[i-1][j]);
-            });
-        });
+        jacobi2d(QueueManager::getInstance(),
+                 mat_a_buf.get(),
+                 mat_res_buf.get(), mat_size);
     }
 
     static std::string getBenchmarkName() { return "Jacobi_2d"; }
