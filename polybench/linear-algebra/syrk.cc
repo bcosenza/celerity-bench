@@ -9,6 +9,36 @@ namespace values {
     constexpr BENCH_DATA_TYPE beta = 14512;
 } // namespace values
 
+
+void syrk(
+        celerity::distr_queue& queue,
+        celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a,
+        celerity::buffer<BENCH_DATA_TYPE, 2>& mat_res,
+        const size_t mat_size
+        ){
+    queue.submit([=](celerity::handler& cgh) {
+        auto res = mat_res.template
+                get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
+        cgh.parallel_for<class Syrk1>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item)
+        { res[item] *= values::beta; });
+    });
+
+    QueueManager::getInstance().submit([=](celerity::handler& cgh) {
+        auto A = mat_a.template
+                get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
+        auto res = mat_res.template
+                get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
+        cgh.parallel_for<class Syrk2>(cl::sycl::range<2>(mat_size, mat_size), [=, n = mat_size](cl::sycl::item<2> item) {
+            const auto i = item[0];
+            const auto j = item[1];
+
+            for(size_t k = 0; k < n; ++k) {
+                res[item] += values::alpha * (A[{i, k}] * A[{j, k}]);
+            }
+        });
+    });
+}
+
 class Syrk;
 
 class Syrk {
@@ -42,27 +72,8 @@ public:
     }
 
     void run() {
-        QueueManager::getInstance().submit([=](celerity::handler& cgh) {
-            auto res = mat_res_buf.get().template
-                    get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
-            cgh.parallel_for<class Syrk1>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item)
-                    { res[item] *= values::beta; });
-        });
-
-        QueueManager::getInstance().submit([=](celerity::handler& cgh) {
-            auto A = mat_a_buf.get().template
-                    get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-            auto res = mat_res_buf.get().template
-                    get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
-            cgh.parallel_for<class Syrk2>(cl::sycl::range<2>(mat_size, mat_size), [=, n = mat_size](cl::sycl::item<2> item) {
-                const auto i = item[0];
-                const auto j = item[1];
-
-                for(size_t k = 0; k < n; ++k) {
-                    res[item] += values::alpha * (A[{i, k}] * A[{j, k}]);
-                }
-            });
-        });
+        syrk(QueueManager::getInstance(),
+             mat_a_buf.get(), mat_res_buf.get(), mat_size);c
     }
 
     static std::string getBenchmarkName() { return "Syrk"; }
