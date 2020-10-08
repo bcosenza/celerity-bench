@@ -64,6 +64,7 @@ function(add_benchmark source_dir target_base_name suffix props)
 ##      -o "${CMAKE_BINARY_DIR}/${source_dir}/${target_name}.sfeatures"
 ##      -fs gpu
 #    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${target_name}_sfeatures.dir"
+#    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${target_name}_sfeatures.dir"
 #    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${source_dir}/${target_base_name}.cc
 #  )
 endfunction(add_benchmark)
@@ -136,5 +137,5 @@ add_benchmark(single-kernel sobel _ "")
 # needs ndrange support in celerity:
 #add_benchmark(single-kernel scalar_prod)
 
-#add_benchmark(runtime matmulchain _ "")
+add_benchmark(runtime matmulchain _ "")
 

@@ -73,7 +73,7 @@ public:
 
     void run() {
         syrk(QueueManager::getInstance(),
-             mat_a_buf.get(), mat_res_buf.get(), mat_size);c
+             mat_a_buf.get(), mat_res_buf.get(), mat_size);
     }
 
     static std::string getBenchmarkName() { return "Syrk"; }
