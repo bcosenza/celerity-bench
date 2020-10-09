@@ -19,7 +19,7 @@ void gemm(celerity::distr_queue& queue,
         auto a = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
         auto b = mat_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
         auto res = mat_res.template get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Gemm>(cl::sycl::range<2>(mat_size, mat_size), [=, n = mat_size](cl::sycl::item<2> item) {
+        cgh.parallel_for<class Gemm>(mat_res.get_range(), [=, n = mat_size](cl::sycl::item<2> item) {
             const auto i = item[0];
             const auto j = item[1];
             res[item] *= values::beta;
@@ -65,7 +65,7 @@ public:
 
         mat_a_buf.initialize(mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
         mat_b_buf.initialize(mat_b.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_res_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
+        mat_res_buf.initialize(mat_res.data(), cl::sycl::range<2>(mat_size, mat_size));
     }
 
     void run() {
@@ -77,7 +77,7 @@ public:
     bool verify(VerificationSetting &ver) {
         bool verification_passed = true;
         QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-            auto result = mat_res_buf.get().template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
+            auto result = mat_res_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
             cgh.run([=, &verification_passed]() {
 
                 std::vector<BENCH_DATA_TYPE>test(mat_size * mat_size);
@@ -97,7 +97,8 @@ public:
                         for(size_t k = 0; k < mat_size; k++) {
                             test[i*mat_size+j] += values::alpha * test_a[i*mat_size + k] * test_b[k* mat_size + j];
                         }
-                        verification_passed = almost_equal(result[{i, j}], test[(i*mat_size)+j], 1.05f);
+                        verification_passed = almost_equal(result[{i, j}], test[(i*mat_size)+j], 1);
+
                     }
             });
         });

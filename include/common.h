@@ -242,6 +242,5 @@ template<class T>
 typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
 almost_equal(T x, T y, float EPS)
 {
-    return std::fabs(x-y) <= EPS
-           || std::fabs(x-y) < std::numeric_limits<T>::min();
+    return std::fabs(x-y) <= EPS;
 }

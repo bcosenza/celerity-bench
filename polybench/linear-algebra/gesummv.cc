@@ -101,7 +101,7 @@ public:
     bool verify(VerificationSetting &ver) {
         bool verification_passed = true;
         QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-            auto result = tmp_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(mat_size));
+            auto result = y_buffer.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(mat_size));
 
             for(size_t i = 0; i < mat_size; i++) {
                 tmp[i] = 0;
@@ -114,8 +114,7 @@ public:
                 y[i] = values::alpha * tmp[i] + values::beta * y[i];
 
                 verification_passed = almost_equal(y[i], result[i],3);
-                if(!verification_passed)
-                    std::cout<<y[i]<<"\t"<<result[i]<<std::endl;
+
             }
         });
         QueueManager::sync();
