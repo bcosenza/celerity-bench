@@ -3,7 +3,7 @@
 
 #include <common.h>
 #define FLOAT_N 3214212.01
-
+    
 #define sqrt_of_array_cell(x, j) sqrt(x[j])
 
 using BENCH_DATA_TYPE = float;

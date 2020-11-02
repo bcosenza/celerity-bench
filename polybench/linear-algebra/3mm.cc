@@ -59,9 +59,6 @@ public:
         mat_b = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size);
         mat_c = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size);
         mat_d = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size);
-        mat_e = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size,0.f);
-        mat_f = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size,0.f);
-        mat_res = std::vector<BENCH_DATA_TYPE>(mat_size * mat_size, 0.f);
 
         // Initialize matrices to the identity
         for(size_t i = 0; i < mat_size; ++i) {

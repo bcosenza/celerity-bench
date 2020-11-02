@@ -36,7 +36,7 @@ void mvt(celerity::distr_queue& queue,
         cgh.parallel_for<class Mvt2>(mat_x1.get_range(), [=, N_ = mat_size](item<2> item) {
             const auto k = item[0];
             for(size_t l = 0; l < N_; l++) {
-                x2[{k, 0}] += a[{k, l}] * y2[{l, 0}];
+                x2[{k, 0}] += a[{l, k}] * y2[{l, 0}];
             }
         });
     });
