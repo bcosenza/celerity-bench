@@ -25,15 +25,12 @@ set(linear-algebra
         )
 
 foreach(exe IN LISTS stencil)
-  add_executable(${exe}_Celerity stencils/${exe}.cpp)
-  add_celerity_to_target(TARGET ${exe}_Celerity SOURCES stencils/${exe}.cpp)
-  target_compile_options(${exe}_Celerity PRIVATE -fdiagnostics-color=always -Wall)
+  add_benchmark(stencils "${exe}" _ "")
 endforeach(exe)
-
 
 
 foreach(exe IN LISTS linear-algebra)
-  add_executable(${exe}_Celerity linear-algebra/${exe}.cc)
-  add_celerity_to_target(TARGET ${exe}_Celerity SOURCES linear-algebra/${exe}.cc)
-  target_compile_options(${exe}_Celerity PRIVATE -fdiagnostics-color=always -Wall)
+  add_benchmark(linear-algebra "${exe}" _ "")
 endforeach(exe)
+
+
