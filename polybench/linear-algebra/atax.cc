@@ -11,11 +11,13 @@ void atax(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& ma
                 celerity::buffer<BENCH_DATA_TYPE, 2>& mat_x, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_y, 
                 celerity::buffer<BENCH_DATA_TYPE, 2>& mat_tmp,const size_t mat_size) {
 
+#if KERNEL == 1 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto y = mat_y.get_access<cl::sycl::access::mode::write>(cgh, celerity::access::one_to_one<2>());
         cgh.parallel_for<class Atax1>(mat_y.get_range(), [=](cl::sycl::item<2> item) { y[item] = 0; });
     });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
         auto x = mat_x.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -30,7 +32,8 @@ void atax(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& ma
             tmp[item] = result;
         });
     });
-
+#endif
+#if KERNEL == 3 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
         auto tmp = mat_tmp.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -45,6 +48,7 @@ void atax(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& ma
             y[item] = result;
         });
     });
+#endif
 }
 
 class Atax {

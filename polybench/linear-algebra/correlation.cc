@@ -18,6 +18,7 @@ void correlation(celerity::distr_queue& queue,
                  celerity::buffer<BENCH_DATA_TYPE, 2>& sym,
                  const size_t mat_size) {
     using namespace cl::sycl;
+#if KERNEL == 1 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto data = d.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
         auto mean = m.template get_access<access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
@@ -31,7 +32,8 @@ void correlation(celerity::distr_queue& queue,
             mean[item] = result / ((BENCH_DATA_TYPE)FLOAT_N);
         });
     });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto data = d.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
         auto mean = m.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
@@ -49,7 +51,8 @@ void correlation(celerity::distr_queue& queue,
             stddev[item] = result <= EPS ? 1.0 : result;
         });
     });
-
+#endif
+#if KERNEL == 3 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto data = d.template get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
         auto mean = m.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -66,6 +69,8 @@ void correlation(celerity::distr_queue& queue,
         });
     });
 
+#endif
+#if KERNEL == 4 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto data = d.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
         auto symmat = sym.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(1));
@@ -86,11 +91,13 @@ void correlation(celerity::distr_queue& queue,
             }
         });
     });
-
+#endif
+#if KERNEL == 5 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto symmat = sym.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
         cgh.parallel_for<class Correlation5>(range<2>(1, 1), id<2>(mat_size, mat_size), [=](cl::sycl::item<2> item) { symmat[item] = 1.0; });
     });
+#endif
 }
 
 

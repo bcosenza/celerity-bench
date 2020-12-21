@@ -17,6 +17,7 @@ void mvt(celerity::distr_queue& queue,
 
     using namespace cl::sycl;
     using namespace celerity::access;
+#if KERNEL == 1 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto a = mat_a.template get_access<access::mode::read>(cgh, slice<2>(1));
         auto y1 = mat_y1.template get_access<access::mode::read>(cgh, slice<2>(0));
@@ -29,6 +30,8 @@ void mvt(celerity::distr_queue& queue,
         });
     });
 
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto a = mat_a.template get_access<access::mode::read>(cgh, slice<2>(1));
         auto y2 = mat_y2.template get_access<access::mode::read>(cgh, slice<2>(0));
@@ -40,7 +43,7 @@ void mvt(celerity::distr_queue& queue,
             }
         });
     });
-
+#endif
 
 }
 

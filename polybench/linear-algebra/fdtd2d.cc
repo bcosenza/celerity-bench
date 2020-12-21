@@ -17,12 +17,14 @@ void fdtd2d(celerity::distr_queue& queue,
     using namespace cl::sycl;
     using namespace celerity::access;
     for(size_t t = 0; t < TMAX; t++) {
+#if KERNEL == 1 || !defined( KERNEL )
         queue.submit([=](celerity::handler& cgh) {
             auto fict = fict_buf.template get_access<access::mode::read>(cgh, celerity::access::fixed<2>({{t, 0}, {t, 0}}));
             auto ey = ey_buf.template get_access<access::mode::discard_write>(cgh, one_to_one<2>());
             cgh.parallel_for<class Fdtd2d1>(range<2>(1, mat_size), [=](item<2> item) { ey[item] = fict[{t, 0}]; });
         });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
         queue.submit([=](celerity::handler& cgh) {
             auto ey = ey_buf.template get_access<access::mode::read_write>(cgh, one_to_one<2>());
             auto hz = hz_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
@@ -32,7 +34,8 @@ void fdtd2d(celerity::distr_queue& queue,
                 ey[item] = ey[item] - 0.5 * (hz[item] - hz[{(i - 1), j}]);
             });
         });
-
+#endif
+#if KERNEL == 3 || !defined( KERNEL )
         queue.submit([=](celerity::handler& cgh) {
             auto ex = ex_buf.template get_access<access::mode::read_write>(cgh, one_to_one<2>());
             auto hz = hz_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
@@ -42,7 +45,8 @@ void fdtd2d(celerity::distr_queue& queue,
                 ex[item] = ex[item] - 0.5 * (hz[item] - hz[{i, (j - 1)}]);
             });
         });
-
+#endif
+#if KERNEL == 4 || !defined( KERNEL )
         queue.submit([=](celerity::handler& cgh) {
             auto ex = ex_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
             auto ey = ey_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
@@ -53,6 +57,7 @@ void fdtd2d(celerity::distr_queue& queue,
                 hz[item] = hz[item] - 0.7 * (ex[{i, (j + 1)}] - ex[item] + ey[{(i + 1), j}] - ey[item]);
             });
         });
+#endif
     }
 
 }

@@ -19,6 +19,7 @@ void correlation(celerity::distr_queue& queue,
     using namespace cl::sycl;
     using namespace celerity::access;
 
+#if KERNEL == 1 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto data = d.template get_access<access::mode::read>(cgh, slice<2>(0));
         auto mean = m.template get_access<access::mode::discard_write>(cgh, one_to_one<2>());
@@ -32,7 +33,8 @@ void correlation(celerity::distr_queue& queue,
             mean[item] = result / FLOAT_N;
         });
     });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto mean = m.template get_access<access::mode::read>(cgh, slice<2>(1));
         auto data = d.template get_access<access::mode::read_write>(cgh, one_to_one<2>());
@@ -42,6 +44,8 @@ void correlation(celerity::distr_queue& queue,
         });
     });
 
+#endif
+#if KERNEL == 3 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto data = d.template get_access<access::mode::read>(cgh, celerity::access::all<2>());
         auto symmat = sd.template get_access<access::mode::discard_write>(cgh, slice<2>(1));
@@ -62,6 +66,7 @@ void correlation(celerity::distr_queue& queue,
             }
         });
     });
+#endif
 }
 
 

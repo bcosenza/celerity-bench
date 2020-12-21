@@ -21,6 +21,7 @@ void gramschmidt(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE,
                     {1, 1}};
         };
 
+#if KERNEL == 1 || !defined( KERNEL )
         queue.submit([=](celerity::handler &cgh) {
             auto A = mat_a.template get_access<access::mode::read>(cgh, slice<2>(0));
             auto R = mat_r.template get_access<access::mode::discard_write>(cgh, non_empty_chunk_range_mapper);
@@ -33,7 +34,8 @@ void gramschmidt(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE,
                 R[{k, k}] = sqrt(nrm);
             });
         });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
         queue.submit([=](celerity::handler &cgh) {
             auto A = mat_a.template get_access<access::mode::read>(cgh, one_to_one<2>());
             auto R = mat_r.template get_access<access::mode::read>(cgh, celerity::access::fixed<2>({{k, k},
@@ -42,7 +44,8 @@ void gramschmidt(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE,
             cgh.parallel_for<class Gramschmidt2>(range<2>(mat_size, 1), id<2>(0, k),
                                                  [=](item<2> item) { Q[item] = A[item] / R[{k, k}]; });
         });
-
+#endif
+#if KERNEL == 3 || !defined( KERNEL )
         queue.submit([=](celerity::handler &cgh) {
             auto A = mat_a.template get_access<access::mode::read_write>(cgh, slice<2>(0));
             auto R = mat_r.template get_access<access::mode::discard_write>(cgh, one_to_one<2>());
@@ -64,6 +67,7 @@ void gramschmidt(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE,
                 R[{k, j}] = R_result;
             });
         });
+#endif
     }
 }
 

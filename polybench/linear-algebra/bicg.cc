@@ -16,6 +16,7 @@ void bicg(celerity::distr_queue& queue,
           celerity::buffer<BENCH_DATA_TYPE, 2>& mat_q,
           const size_t mat_size) {
 
+#if KERNEL == 1 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
         auto p = mat_p.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -31,7 +32,8 @@ void bicg(celerity::distr_queue& queue,
             q[item] = result;
         });
     });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
         auto r = mat_r.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
@@ -47,7 +49,7 @@ void bicg(celerity::distr_queue& queue,
             s[item] = result;
         });
     });
-
+#endif
 }
 
 
