@@ -16,13 +16,15 @@ void syrk(
         celerity::buffer<BENCH_DATA_TYPE, 2>& mat_res,
         const size_t mat_size
         ){
+#if KERNEL == 1 || !defined( KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto res = mat_res.template
                 get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
         cgh.parallel_for<class Syrk1>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item)
         { res[item] *= values::beta; });
     });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
     QueueManager::getInstance().submit([=](celerity::handler& cgh) {
         auto A = mat_a.template
                 get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
@@ -37,6 +39,7 @@ void syrk(
             }
         });
     });
+#endif
 }
 
 class Syrk;

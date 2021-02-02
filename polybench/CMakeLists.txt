@@ -12,8 +12,8 @@ set(linear-algebra
         gemm
         2DConvolution
         gesummv
-        syrk
-        syr2k
+#        syrk
+#        syr2k
         3DConvolution
         3mm
 #        atax
@@ -63,3 +63,11 @@ add_benchmark(linear-algebra gramschmidt kernel3 "KERNEL=3")
 add_benchmark(linear-algebra mvt _ "")
 add_benchmark(linear-algebra mvt kernel1 "KERNEL=1")
 add_benchmark(linear-algebra mvt kernel2 "KERNEL=2")
+
+add_benchmark(linear-algebra syrk _ "")
+add_benchmark(linear-algebra syrk kernel1 "KERNEL=1")
+add_benchmark(linear-algebra syrk kernel2 "KERNEL=2")
+
+add_benchmark(linear-algebra syr2k _ "")
+# add_benchmark(linear-algebra syr2k kernel1 "KERNEL=1") # is equivalent to syrk_kernel1
+add_benchmark(linear-algebra syr2k kernel2 "KERNEL=2")

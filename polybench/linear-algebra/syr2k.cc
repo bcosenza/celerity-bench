@@ -46,13 +46,15 @@ public:
     }
 
     void run() {
+#if KERNEL == 1 || !defined( KERNEL )
         QueueManager::getInstance().submit([=](celerity::handler& cgh) {
             auto c = mat_c_buf.get().template
                     get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
             cgh.parallel_for<class Syr2k1>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item)
             { c[item] *= values::beta; });
         });
-
+#endif
+#if KERNEL == 2 || !defined( KERNEL )
         QueueManager::getInstance().submit([=](celerity::handler& cgh) {
             auto A = mat_a_buf.get().template
                     get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
@@ -71,6 +73,7 @@ public:
                 }
             });
         });
+#endif
     }
 
     static std::string getBenchmarkName() { return "Syr2k"; }
