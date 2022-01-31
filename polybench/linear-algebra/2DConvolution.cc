@@ -5,14 +5,16 @@
 
 using BENCH_DATA_TYPE = float;
 
-void conv2D(celerity::distr_queue& queue,
-               celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a,
-               celerity::buffer<BENCH_DATA_TYPE, 2>& mat_b,
+class Conv2D;
+
+void conv2D(celerity::distr_queue queue,
+               celerity::buffer<BENCH_DATA_TYPE, 2> mat_a,
+               celerity::buffer<BENCH_DATA_TYPE, 2> mat_b,
                const size_t mat_size){
     queue.submit([=](celerity::handler& cgh) {
-        auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(1,1));
-        auto B = mat_b.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
-        cgh. parallel_for<class Conv2D>(cl::sycl::range<2>(mat_size-1, mat_size-1),cl::sycl::id<2> {1,1}, [=](cl::sycl::item<2> item) {
+        celerity::accessor A{mat_a, cgh, celerity::access::neighborhood<2>(1,1), celerity::read_only};
+        celerity::accessor B{mat_b, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+        cgh. parallel_for<class Conv2D>(cl::sycl::range<2>(mat_size-1, mat_size-1),cl::sycl::id<2> {1,1}, [=](celerity::item<2> item) {
             const BENCH_DATA_TYPE c11 = +0.2, c21 = +0.5, c31 = -0.8;
             const BENCH_DATA_TYPE c12 = -0.3, c22 = +0.6, c32 = -0.9;
             const BENCH_DATA_TYPE c13 = +0.4, c23 = +0.7, c33 = +0.10;
@@ -25,10 +27,6 @@ void conv2D(celerity::distr_queue& queue,
         });
     });
 }
-
-
-class Conv2D;
-
 
 class Conv2D {
 protected:
@@ -57,8 +55,9 @@ public:
             }
         }
 
-        mat_a_buf.initialize(mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_b_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
+        auto range = celerity::range<2>(mat_size, mat_size);
+        mat_a_buf.initialize(mat_a.data(), range);
+        mat_b_buf.initialize(range);
     }
 
     void run() {
@@ -69,7 +68,7 @@ public:
 
     bool verify(VerificationSetting &ver) {
         bool verification_passed = true;
-        QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+        /* QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
             auto result = mat_b_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
             cgh.run([=, &verification_passed]() {
                 for(size_t i = 1; i < mat_size -1 && verification_passed; ++i)
@@ -87,7 +86,7 @@ public:
                     }
 
             });
-        });
+        }); */
         QueueManager::sync();
         return verification_passed;
     }

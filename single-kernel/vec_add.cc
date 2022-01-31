@@ -11,6 +11,7 @@ protected:
   std::vector<BENCH_DATA_TYPE> input2;
   std::vector<BENCH_DATA_TYPE> output;
   BenchmarkArgs args;
+  size_t size;
 
  PrefetchedBuffer<BENCH_DATA_TYPE, 1> input1_buf;
  PrefetchedBuffer<BENCH_DATA_TYPE, 1> input2_buf;
@@ -20,21 +21,22 @@ public:
   VecAddBench(const BenchmarkArgs &_args) : args(_args) {}
   
   void setup() {
+    size = args.problem_size * args.problem_size;
     // host memory intilization
-    input1.resize(args.problem_size);
-    input2.resize(args.problem_size);
-    output.resize(args.problem_size);
+    input1.resize(size);
+    input2.resize(size);
+    output.resize(size);
 
-    for (size_t i = 0; i < args.problem_size; i++) {
+    for (size_t i = 0; i < size; i++) {
       input1[i] = static_cast<BENCH_DATA_TYPE>(i);
       input2[i] = static_cast<BENCH_DATA_TYPE>(i);
       output[i] = static_cast<BENCH_DATA_TYPE>(0);
      // std::cout << input1[i] << ":" << input2[i] << std::endl;
     }
-
-    input1_buf.initialize(input1.data(), s::range<1>(args.problem_size));
-    input2_buf.initialize(input2.data(), s::range<1>(args.problem_size));
-    output_buf.initialize(output.data(), s::range<1>(args.problem_size));
+    auto range = celerity::range<1>(size);
+    input1_buf.initialize(input1.data(), range);
+    input2_buf.initialize(input2.data(), range);
+    output_buf.initialize(output.data(), range);
   }
 
   void run() {
@@ -46,11 +48,12 @@ public:
     celerity::buffer<BENCH_DATA_TYPE,1>& c = output_buf.get();
 
     queue.submit([=](celerity::handler& cgh) {
-      auto in1 = a.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
-      auto in2 = b.template get_access<s::access::mode::read>(cgh, celerity::access::one_to_one<1>());
+      celerity::accessor in1{a, cgh, celerity::access::one_to_one{}, celerity::read_only};
+      celerity::accessor in2{b, cgh, celerity::access::one_to_one{}, celerity::read_only};
       // Use discard_write here, otherwise the content of the host buffer must first be copied to device
-      auto out = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
-      cl::sycl::range<1> ndrange {args.problem_size};
+      //auto out = c.template get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<1>());
+      celerity::accessor out{c, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+      celerity::range<1> ndrange {size};
 
       cgh.parallel_for<class VecAddKernel>(ndrange,
         [=](cl::sycl::id<1> gid) 
@@ -63,10 +66,10 @@ public:
 
   bool verify(VerificationSetting &ver) {
     bool verification_passed = true;
-    QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-      auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
+    /*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+      auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(size));
       cgh.run([=, &verification_passed]() {
-      for(size_t i = 0; i < args.problem_size; i++){
+      for(size_t i = 0; i < size; i++){
           auto expected = input1[i] + input2[i];
           if(expected != result[i]){
               verification_passed = false;
@@ -74,7 +77,7 @@ public:
           }
         }  
       });
-    });
+    });*/
     QueueManager::sync();
     return verification_passed;
   }

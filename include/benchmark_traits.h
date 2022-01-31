@@ -4,7 +4,7 @@
 
 #include <celerity/celerity.h>
 
-namespace cl {
+inline namespace cl {
 namespace sycl {
 namespace detail {
 

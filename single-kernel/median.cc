@@ -44,8 +44,9 @@ public:
     load_bitmap_mirrored(args.cli.template get<std::string>("--image-file"), size, input);
     output.resize(size * size);
 
-    input_buf.initialize(input.data(), s::range<2>(size, size));    
-    output_buf.initialize(output.data(), s::range<2>(size, size));
+		auto range = celerity::range<2>(size, size);
+    input_buf.initialize(input.data(), range);
+    output_buf.initialize(output.data(), range);
   }
 
   void run() {
@@ -55,8 +56,8 @@ public:
     celerity::buffer<cl::sycl::float4,2>& c = output_buf.get();
 
     queue.submit([=](celerity::handler& cgh) {
-      auto in  = a.get_access<s::access::mode::read>(cgh, celerity::access::neighborhood<2>(1, 1));
-      auto out = c.get_access<s::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
+      celerity::accessor in{a, cgh, celerity::access::neighborhood<2>(1,1), celerity::read_only};
+      celerity::accessor out{c, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
       cl::sycl::range<2> ndrange {size, size};
 
       cgh.parallel_for<class MedianFilterBenchKernel>(ndrange, [in, out, size_ = size](cl::sycl::id<2> gid)
@@ -129,7 +130,7 @@ public:
   bool verify(VerificationSetting &ver) {  
     bool verification_passed = true;
 
-    QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+    /*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(args.problem_size, args.problem_size));
 
       for (size_t i = 0; i < args.problem_size; i++) {
@@ -191,7 +192,7 @@ public:
           }
         }
       });
-    });
+    });*/
     QueueManager::sync();    
     return verification_passed;
 }

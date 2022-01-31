@@ -60,9 +60,9 @@ public:
     bool all_runs_pass = true;
     bool is_master = false;
     try {
-      QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
-        is_master = true;
-      });
+      //int world_rank;
+      //MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+      is_master = celerity::detail::runtime::get_instance().is_master_node();
       // Run until we have as many runs as requested or until
       // verification fails
       for(std::size_t run = 0; run < args.num_runs && all_runs_pass; ++run) {
@@ -113,6 +113,7 @@ public:
         if constexpr(cl::sycl::detail::BenchmarkTraits<Benchmark>::hasVerify) {
           if(args.verification.range.size() > 0) {
             if(args.verification.enabled) {
+              std::cerr << "Starting verification\n";
               if(!b.verify(args.verification)) {
                 all_runs_pass = false;
               }
@@ -183,6 +184,9 @@ public:
   BenchmarkApp(int argc, char** argv)
   {
     try{
+      if (!celerity::detail::runtime::is_initialized()) {
+        celerity::runtime::init(&argc, &argv);
+      }
       args = BenchmarkCommandLine{argc, argv}.getBenchmarkArgs();
     }
     catch(std::exception& e){

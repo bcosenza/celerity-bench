@@ -17,7 +17,7 @@ using CommandLineArguments = std::unordered_map<std::string, std::string>;
 using FlagList = std::unordered_set<std::string>;
 
 //namespace detail {
-namespace cl {
+inline namespace cl {
 namespace sycl {
 namespace detail {
 
@@ -80,6 +80,60 @@ cast(const std::string& s)
 {
   return cl::sycl::detail::parseSyclArray<cl::sycl::id<3>>(s, 0);
 }
+
+/*
+	std::unique_ptr<runtime> runtime::instance = nullptr;
+
+	void runtime::init(int* argc, char** argv[], cl::sycl::device* user_device) {
+		if(test_mode) {
+			instance.reset();
+			instance = std::unique_ptr<runtime>(new runtime(argc, argv, user_device));
+			return;
+		}
+		instance = std::unique_ptr<runtime>(new runtime(argc, argv, user_device));
+	}
+
+	runtime& runtime::get_instance() {
+		if(instance == nullptr) { throw std::runtime_error("Runtime has not been initialized"); }
+		return *instance;
+	}*/
+
+/*class QueueManager {
+private:
+  static std::unique_ptr<QueueManager> inst;
+  std::unique_ptr<celerity::distr_queue> queue = nullptr;
+  QueueManager() {
+    queue = std::unique_ptr<celerity::distr_queue>(new celerity::distr_queue());
+  }
+public:
+  static QueueManager& getInstance();
+  static void sync();
+  celerity::distr_queue& get() {
+    return *queue;
+  }
+
+  QueueManager(QueueManager const&) = delete;
+  void operator=(QueueManager const&) = delete;
+
+	//runtime::~runtime() {
+	~QueueManager() {
+    if (inst != nullptr) {
+      queue.reset();
+      inst.reset();
+    }
+  }
+};
+
+QueueManager& QueueManager::getInstance() {
+  if (inst == nullptr) {
+    inst = std::unique_ptr<QueueManager>(new QueueManager());
+  }
+  return *inst;
+}
+void QueueManager::sync() {
+  getInstance().get().slow_full_sync();
+}
+std::unique_ptr<QueueManager> QueueManager::inst = nullptr;*/
 
 class QueueManager
 {

@@ -5,13 +5,14 @@ class Jacobi_1d;
 
 using BENCH_DATA_TYPE = float;
 
-void jacobi(celerity::distr_queue& queue,
-            celerity::buffer<BENCH_DATA_TYPE, 1>& mat_a, celerity::buffer<BENCH_DATA_TYPE, 1>& mat_res,
+void jacobi(celerity::distr_queue queue,
+            celerity::buffer<BENCH_DATA_TYPE, 1> mat_a, celerity::buffer<BENCH_DATA_TYPE, 1> mat_res,
             const size_t mat_size){
     queue.submit([=](celerity::handler& cgh) {
-        auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<1>(1));
-        auto RES = mat_res.template get_access<cl::sycl::access::mode::write>(cgh, celerity::access::neighborhood<1>(1));
-        cgh.parallel_for<class Jacobi_1d>(cl::sycl::range<1> (mat_size - 1), cl::sycl::id<1> {1}, [=](cl::sycl::item<1> item) {
+        celerity::accessor A{mat_a, cgh, celerity::access::neighborhood<1>(1), celerity::read_only};
+        celerity::accessor RES{mat_res, cgh, celerity::access::neighborhood<1>(1), celerity::write_only, celerity::no_init};
+
+        cgh.parallel_for<class Jacobi_1d>(cl::sycl::range<1> (mat_size - 1), cl::sycl::id<1> {1}, [=](celerity::item<1> item) {
             auto i = item[0];
             RES[i] =  0.33333 * (A[i-1] + A[i] + A[i + 1]);
         });
@@ -42,8 +43,9 @@ public:
             mat_res[i] = ((BENCH_DATA_TYPE) i+ 3) / mat_size;
         }
 
-        mat_a_buf.initialize(mat_a.data(), cl::sycl::range<1>(mat_size));
-        mat_res_buf.initialize(mat_res.data(), cl::sycl::range<1>(mat_size));
+        auto range = celerity::range<1>(mat_size);
+        mat_a_buf.initialize(mat_a.data(), range);
+        mat_res_buf.initialize(mat_res.data(), range);
     }
 
     void run() {
@@ -54,7 +56,7 @@ public:
 
     bool verify(VerificationSetting &ver) {
         bool verification_passed = true;
-        QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+        /*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
             auto result = mat_res_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<1>(mat_size));
             cgh.run([=, &verification_passed]() {
                 for(size_t i = 1; i < mat_size -1 && verification_passed; ++i){
@@ -63,7 +65,7 @@ public:
                         verification_passed = almost_equal(kernel_value, host_value, 1.f);
                     }
             });
-        });
+        });*/
         QueueManager::sync();
         return verification_passed;
     }

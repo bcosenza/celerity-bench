@@ -8,14 +8,14 @@ using BENCH_DATA_TYPE = float;
 
 class mm2;
 
-void multiply(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_b,
-              celerity::buffer<BENCH_DATA_TYPE, 2>& mat_c, const size_t mat_size) {
+void multiply(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> mat_a, celerity::buffer<BENCH_DATA_TYPE, 2> mat_b,
+              celerity::buffer<BENCH_DATA_TYPE, 2> mat_c, const size_t mat_size) {
     queue.submit([=](celerity::handler& cgh) {
-        auto a = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-        auto b = mat_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-        auto c = mat_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
+		    celerity::accessor a{mat_a, cgh, celerity::access::slice<2>(1), celerity::read_only};
+		    celerity::accessor b{mat_b, cgh, celerity::access::slice<2>(0), celerity::read_only};
+		    celerity::accessor c{mat_c, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
 
-        cgh.parallel_for<class Matmul>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item) {
+        cgh.parallel_for<class Matmul>(cl::sycl::range<2>(mat_size, mat_size), [=](celerity::item<2> item) {
             auto sum = 0.f;
             for(size_t k = 0; k < mat_size; ++k) {
                 const auto a_ik = a[{item[0], k}];
@@ -65,11 +65,12 @@ public:
             }
         }
 
-        mat_a_buf.initialize(mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_b_buf.initialize(mat_b.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_c_buf.initialize(mat_c.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_d_buf.initialize(mat_d.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_res_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
+        auto range = cl::sycl::range<2>(mat_size, mat_size);
+        mat_a_buf.initialize(mat_a.data(), range);
+        mat_b_buf.initialize(mat_b.data(), range);
+        mat_c_buf.initialize(mat_c.data(), range);
+        mat_d_buf.initialize(mat_d.data(), range);
+        mat_res_buf.initialize(range);
     }
 
     void run() {
@@ -81,14 +82,14 @@ public:
 
     bool verify(VerificationSetting &ver) {
         bool verification_passed = true;
-        QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+        /*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
             auto result = mat_res_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
             cgh.run([=, &verification_passed]() {
                 for(size_t i = 0; i < mat_size && verification_passed; ++i)
                     for(size_t j = 0; j < mat_size && verification_passed; ++j)
                         verification_passed = result[{i, j}] == (i == j);
             });
-        });
+        });*/
         QueueManager::sync();
         return verification_passed;
     }
