@@ -10,18 +10,49 @@ template <typename T>
 class MatmulChain;
 
 template <typename T>
-void multiply(celerity::distr_queue& queue, celerity::buffer<T, 2>& mat_a, celerity::buffer<T, 2>& mat_b,
-    celerity::buffer<T, 2>& mat_c, const size_t mat_size) {
+void set_identity(celerity::distr_queue queue, celerity::buffer<T, 2> mat) {
 	queue.submit([=](celerity::handler& cgh) {
-		auto a = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-		auto b = mat_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-		auto c = mat_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
-		//auto a = mat_a.template get_access<cl::sycl::access::mode::read>(cgh);
-		//auto b = mat_b.template get_access<cl::sycl::access::mode::read>(cgh);
-		//auto c = mat_c.template get_access<cl::sycl::access::mode::discard_write>(cgh);
+		celerity::accessor dw{mat, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+		cgh.parallel_for<class set_identity_kernel>(mat.get_range(), [=](celerity::item<2> item) { dw[item] = item[0] == item[1]; });
+	});
+}
 
-		cgh.parallel_for<class MatmulChain<T>>(cl::sycl::range<2>(mat_size, mat_size), [=](cl::sycl::item<2> item) {
-			auto sum = 0.f;
+template <typename T>
+void multiply(celerity::distr_queue queue, celerity::buffer<T, 2> mat_a, celerity::buffer<T, 2> mat_b, celerity::buffer<T, 2> mat_c, const size_t mat_size) {
+	queue.submit([=](celerity::handler& cgh) {
+		celerity::accessor a{mat_a, cgh, celerity::access::slice<2>(1), celerity::read_only};
+		celerity::accessor b{mat_b, cgh, celerity::access::slice<2>(0), celerity::read_only};
+		celerity::accessor c{mat_c, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+
+/* #if CELERITY_FEATURE_LOCAL_ACCESSOR
+
+		// Use local-memory tiling to avoid waiting on global memory too often
+		const size_t GROUP_SIZE = 8;
+		celerity::local_accessor<T, 2> scratch_a{{GROUP_SIZE, GROUP_SIZE}, cgh};
+		celerity::local_accessor<T, 2> scratch_b{{GROUP_SIZE, GROUP_SIZE}, cgh};
+
+		cgh.parallel_for<class MatmulChain<T>>(celerity::nd_range<2>{{mat_size, mat_size}, {GROUP_SIZE, GROUP_SIZE}}, [=](celerity::nd_item<2> item) {
+			T sum{};
+			const auto lid = item.get_local_id();
+			for(size_t j = 0; j < mat_size; j += GROUP_SIZE) {
+				scratch_a[lid] = a[item.get_group(0) * GROUP_SIZE + lid[0]][j + lid[1]];
+				scratch_b[lid] = b[j + lid[0]][item.get_group(1) * GROUP_SIZE + lid[1]];
+				celerity::group_barrier(item.get_group());
+
+				for(size_t k = 0; k < GROUP_SIZE; ++k) {
+					const auto a_ik = scratch_a[lid[0]][k];
+					const auto b_kj = scratch_b[k][lid[1]];
+					sum += a_ik * b_kj;
+				}
+				celerity::group_barrier(item.get_group());
+			}
+			c[item.get_global_id()] = sum;
+		});
+
+#else */
+
+		cgh.parallel_for<class MatmulChain<T>>(celerity::range<2>(mat_size, mat_size), [=](celerity::item<2> item) {
+			T sum{};
 			for(size_t k = 0; k < mat_size; ++k) {
 				const auto a_ik = a[{item[0], k}];
 				const auto b_kj = b[{k, item[1]}];
@@ -29,18 +60,15 @@ void multiply(celerity::distr_queue& queue, celerity::buffer<T, 2>& mat_a, celer
 			}
 			c[item] = sum;
 		});
-  });
+
+//#endif
+	});
 }
 
 
 template <typename T>
 class MatmulChain {
 protected:    
-	std::vector<T> mat_a;
-	std::vector<T> mat_b;
-	std::vector<T> mat_c;
-	std::vector<T> mat_d;
-	std::vector<T> mat_res;
 	BenchmarkArgs args;
 	int mat_size;
 
@@ -58,29 +86,18 @@ public:
 	}
 
 	void setup() {
-		mat_a = std::vector<T>(mat_size * mat_size);
-		mat_b = std::vector<T>(mat_size * mat_size);
-		mat_c = std::vector<T>(mat_size * mat_size);
-		mat_d = std::vector<T>(mat_size * mat_size);
-		mat_res = std::vector<T>(mat_size * mat_size);
-
-		// Initialize matrices to the identity
-		for(size_t i = 0; i < mat_size; ++i) {
-			for(size_t j = 0; j < mat_size; ++j) {
-				mat_a[i * mat_size + j] = i == j;
-				mat_b[i * mat_size + j] = i == j;
-				mat_c[i * mat_size + j] = i == j;
-				mat_d[i * mat_size + j] = i == j;
-			}
-		}
-
-		mat_a_buf.initialize(mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
-		mat_b_buf.initialize(mat_b.data(), cl::sycl::range<2>(mat_size, mat_size));
-		mat_c_buf.initialize(mat_c.data(), cl::sycl::range<2>(mat_size, mat_size));
-		mat_d_buf.initialize(mat_d.data(), cl::sycl::range<2>(mat_size, mat_size));
-		mat_p_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
-		mat_q_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
-		mat_res_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
+		auto range = celerity::range<2>(mat_size, mat_size);
+		mat_a_buf.initialize(range);
+		mat_b_buf.initialize(range);
+		mat_c_buf.initialize(range);
+		mat_d_buf.initialize(range);
+		mat_p_buf.initialize(range);
+		mat_q_buf.initialize(range);
+		mat_res_buf.initialize(range);
+    set_identity(QueueManager::getInstance(), mat_a_buf.get());
+    set_identity(QueueManager::getInstance(), mat_b_buf.get());
+    set_identity(QueueManager::getInstance(), mat_c_buf.get());
+    set_identity(QueueManager::getInstance(), mat_d_buf.get());
 	}
 
 	void run() {
@@ -93,7 +110,7 @@ public:
 
 	bool verify(VerificationSetting &ver) {
 		bool verification_passed = true;
-		QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+		/*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
 			auto result = mat_res_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
 
 			cgh.run([=, &verification_passed]() {
@@ -112,7 +129,7 @@ public:
 				}
 			});
 		});
-		QueueManager::sync();
+		QueueManager::sync();*/
 		return verification_passed;
 	}
 };

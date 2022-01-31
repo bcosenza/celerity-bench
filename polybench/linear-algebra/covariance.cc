@@ -10,20 +10,20 @@ using BENCH_DATA_TYPE = float;
 
 class Correlation;
 
-void correlation(celerity::distr_queue& queue,
-                 celerity::buffer<BENCH_DATA_TYPE, 2>& d,
-                 celerity::buffer<BENCH_DATA_TYPE, 2>& m,
-                 celerity::buffer<BENCH_DATA_TYPE, 2>& sd,
+void correlation(celerity::distr_queue queue,
+                 celerity::buffer<BENCH_DATA_TYPE, 2> d,
+                 celerity::buffer<BENCH_DATA_TYPE, 2> m,
+                 celerity::buffer<BENCH_DATA_TYPE, 2> sd,
                  const size_t mat_size) {
 
     using namespace cl::sycl;
     using namespace celerity::access;
 
-#if KERNEL == 1 || !defined( KERNEL )
+#if BENCH_KERNEL == 1 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto data = d.template get_access<access::mode::read>(cgh, slice<2>(0));
-        auto mean = m.template get_access<access::mode::discard_write>(cgh, one_to_one<2>());
-        cgh.parallel_for<class Covariance1>(range<2>(mat_size, 1), id<2>(1, 0), [=, N_ = mat_size](item<2> item) {
+        celerity::accessor data{d, cgh, celerity::access::slice<2>(0), celerity::read_only};
+        celerity::accessor mean{m, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+        cgh.parallel_for<class Covariance1>(range<2>(mat_size, 1), id<2>(1, 0), [=, N_ = mat_size](celerity::item<2> item) {
             const auto j = item[0];
 
             BENCH_DATA_TYPE result = 0;
@@ -34,22 +34,26 @@ void correlation(celerity::distr_queue& queue,
         });
     });
 #endif
-#if KERNEL == 2 || !defined( KERNEL )
+#if BENCH_KERNEL == 2 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto mean = m.template get_access<access::mode::read>(cgh, slice<2>(1));
-        auto data = d.template get_access<access::mode::read_write>(cgh, one_to_one<2>());
-        cgh.parallel_for<class Covariance2>(range<2>(mat_size, mat_size), id<2>(1, 1), [=](item<2> item) {
+        celerity::accessor mean{m, cgh, celerity::access::slice<2>(1), celerity::read_only};
+        celerity::accessor data{d, cgh, celerity::access::one_to_one{}, celerity::read_write};
+        cgh.parallel_for<class Covariance2>(range<2>(mat_size, mat_size), id<2>(1, 1), [=](celerity::item<2> item) {
             const auto j = item[1];
             data[item] -= mean[{j, 0}];
         });
     });
 
 #endif
-#if KERNEL == 3 || !defined( KERNEL )
+#if BENCH_KERNEL == 3 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
         auto data = d.template get_access<access::mode::read>(cgh, celerity::access::all<2>());
         auto symmat = sd.template get_access<access::mode::discard_write>(cgh, slice<2>(1));
         auto symmat2 = sd.template get_access<access::mode::discard_write>(cgh, slice<2>(0));
+        celerity::accessor data{d, cgh, celerity::access::all{}, celerity::read_only};
+        celerity::accessor symmat{sd, cgh, celerity::access::slice<2>(1), celerity::write_only, celerity::no_init};
+        celerity::accessor symmat2{sd, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
+
         cgh.parallel_for<class Covariance3>(range<2>(mat_size, 1), id<2>(1, 0), [=, M_ = mat_size, N_ = mat_size](item<2> item) {
             const auto j1 = item[0];
 
@@ -98,9 +102,9 @@ public:
             }
         }
 
-        data_buf.initialize(data.data(), cl::sycl::range<2>((mat_size+1), (mat_size+1)));
-        mean_buf.initialize(mean.data(), cl::sycl::range<2>((mat_size+1), 1));
-        symmat_buf.initialize(symmat.data(), cl::sycl::range<2>((mat_size+1), (mat_size+1)));
+        data_buf.initialize(data.data(),     celerity::range<2>((mat_size+1), (mat_size+1)));
+        mean_buf.initialize(mean.data(),     celerity::range<2>((mat_size+1), 1));
+        symmat_buf.initialize(symmat.data(), celerity::range<2>((mat_size+1), (mat_size+1)));
     }
 
     void run() {

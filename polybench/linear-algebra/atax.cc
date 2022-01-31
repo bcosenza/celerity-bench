@@ -7,22 +7,22 @@ using BENCH_DATA_TYPE = float;
 
 class Atax;
 
-void atax(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a, \
-                celerity::buffer<BENCH_DATA_TYPE, 2>& mat_x, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_y, 
-                celerity::buffer<BENCH_DATA_TYPE, 2>& mat_tmp,const size_t mat_size) {
+void atax(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> mat_a, \
+                celerity::buffer<BENCH_DATA_TYPE, 2> mat_x, celerity::buffer<BENCH_DATA_TYPE, 2> mat_y, 
+                celerity::buffer<BENCH_DATA_TYPE, 2> mat_tmp,const size_t mat_size) {
 
-#if KERNEL == 1 || !defined( KERNEL )
+#if BENCH_KERNEL == 1 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto y = mat_y.get_access<cl::sycl::access::mode::write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Atax1>(mat_y.get_range(), [=](cl::sycl::item<2> item) { y[item] = 0; });
+        celerity::accessor y{mat_y, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+        cgh.parallel_for<class Atax1>(celerity::range<2>(mat_size, 1), [=](celerity::item<2> item) { y[item] = 0; });
     });
 #endif
-#if KERNEL == 2 || !defined( KERNEL )
+#if BENCH_KERNEL == 2 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-        auto x = mat_x.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-        auto tmp = mat_tmp.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Atax2>(mat_tmp.get_range(), [=, NY_ = mat_size ](cl::sycl::item<2> item) {
+        celerity::accessor A{mat_a, cgh, celerity::access::slice<2>(1), celerity::read_only};
+        celerity::accessor x{mat_x, cgh, celerity::access::all{}, celerity::read_only};
+        celerity::accessor tmp{mat_tmp, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+        cgh.parallel_for<class Atax2>(celerity::range<2>(mat_size, 1), [=, NY_ = mat_size ](celerity::item<2> item) {
             const auto i = item[0];
 
             BENCH_DATA_TYPE result = 0;
@@ -33,12 +33,13 @@ void atax(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& ma
         });
     });
 #endif
-#if KERNEL == 3 || !defined( KERNEL )
+#if BENCH_KERNEL == 3 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto A = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-        auto tmp = mat_tmp.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-        auto y = mat_y.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Atax3>(mat_y.get_range(), [=, NX_ = mat_size](cl::sycl::item<2> item) {
+        celerity::accessor A{mat_a, cgh, celerity::access::slice<2>(0), celerity::read_only};
+        celerity::accessor tmp{mat_tmp, cgh, celerity::access::all{}, celerity::read_only};
+        celerity::accessor y{mat_y, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+
+        cgh.parallel_for<class Atax3>(celerity::range<2>(mat_size, 1), [=, NX_ = mat_size](celerity::item<2> item) {
             const auto j = item[0];
 
             BENCH_DATA_TYPE result = 0;
@@ -82,10 +83,10 @@ public:
             }
         }
 
-        mat_a_buf.initialize(mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_x_buf.initialize(mat_x.data(), cl::sycl::range<2>(mat_size, 1));
-        mat_y_buf.initialize(mat_y.data(), cl::sycl::range<2>(mat_size, 1));
-        mat_tmp_buf.initialize(cl::sycl::range<2>(mat_size,1));
+        mat_a_buf.initialize(mat_a.data(), celerity::range<2>(mat_size, mat_size));
+        mat_x_buf.initialize(mat_x.data(), celerity::range<2>(mat_size, 1));
+        mat_y_buf.initialize(mat_y.data(), celerity::range<2>(mat_size, 1));
+        mat_tmp_buf.initialize(            celerity::range<2>(mat_size, 1));
     }
 
     void run() {
@@ -96,7 +97,7 @@ public:
 
     bool verify(VerificationSetting &ver) {
         bool verification_passed = true;
-        QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+        /*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
             auto result = mat_y_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size,1));
             cgh.run([=, &verification_passed]() {
                 std::vector<BENCH_DATA_TYPE> test_y(mat_size,0.f);
@@ -110,7 +111,7 @@ public:
                     verification_passed =  almost_equal(test_y[i], result[{i,0}],3);
                 }
             });
-        });
+        });*/
         QueueManager::sync();
         return verification_passed;
     }

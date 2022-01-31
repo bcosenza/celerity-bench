@@ -19,22 +19,27 @@ class InitializationDummyKernel2;
 template <class T, int Dimensions=1>
 class PrefetchedBuffer {
 public:
-  void initialize(cl::sycl::range<Dimensions> r) {
+  void initialize(celerity::range<Dimensions> r) {
     buff = std::make_shared<celerity::buffer<T, Dimensions>>(r);
   }
 
-  void initialize(T* data, cl::sycl::range<Dimensions> r) {
+  void initialize(T* data, celerity::range<Dimensions> r) {
     buff = std::make_shared<celerity::buffer<T, Dimensions>>(data, r);
   }
 
-  void initialize(const T* data, cl::sycl::range<Dimensions> r) {
+  void initialize(const T* data, celerity::range<Dimensions> r) {
     buff = std::make_shared<celerity::buffer<T, Dimensions>>(data, r);
   }
 
-  template <cl::sycl::access::mode mode>
-  auto get_access(celerity::handler& commandGroupHandler, cl::sycl::range<Dimensions> accessRange) {
+  /*celerity::accessor get_accessor(celerity::handler& cgh, celerity::range<Dimensions> accessRange) {
+    celerity::accessor result{buff.get(), cgh, celerity::access::one_to_one{}, celerity::read_only_host_task};
+    return result;
+  }*/
+
+  /*template <celerity::access mode>
+  auto get_access(celerity::handler& commandGroupHandler, celerity::range<Dimensions> accessRange) {
     return buff->template get_access<mode>(commandGroupHandler, accessRange);
-  }
+  }*/
 
   /* TODO - untested, uncomment and adapt if needed
   template <cl::sycl::access::mode mode, cl::sycl::access::target target = cl::sycl::access::target::global_buffer>

@@ -11,18 +11,18 @@ using BENCH_DATA_TYPE = float;
 
 class Correlation;
 
-void correlation(celerity::distr_queue& queue,
-                 celerity::buffer<BENCH_DATA_TYPE, 2>& d,
-                 celerity::buffer<BENCH_DATA_TYPE, 2>& m,
-                 celerity::buffer<BENCH_DATA_TYPE, 2>& sd,
-                 celerity::buffer<BENCH_DATA_TYPE, 2>& sym,
+void correlation(celerity::distr_queue queue,
+                 celerity::buffer<BENCH_DATA_TYPE, 2> d,
+                 celerity::buffer<BENCH_DATA_TYPE, 2> m,
+                 celerity::buffer<BENCH_DATA_TYPE, 2> sd,
+                 celerity::buffer<BENCH_DATA_TYPE, 2> sym,
                  const size_t mat_size) {
     using namespace cl::sycl;
-#if KERNEL == 1 || !defined( KERNEL )
+#if BENCH_KERNEL == 1 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto data = d.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-        auto mean = m.template get_access<access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Correlation1>(range<2>(mat_size, 1), id<2>(1, 0), [=, N_ = mat_size](cl::sycl::item<2> item) {
+        celerity::accessor data{d, cgh, celerity::access::slice<2>(0), celerity::read_only};
+        celerity::accessor mean{m, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+        cgh.parallel_for<class Correlation1>(range<2>(mat_size, 1), id<2>(1, 0), [=, N_ = mat_size](celerity::item<2> item) {
             const auto j = item[0];
 
             BENCH_DATA_TYPE result = 0;
@@ -33,12 +33,12 @@ void correlation(celerity::distr_queue& queue,
         });
     });
 #endif
-#if KERNEL == 2 || !defined( KERNEL )
+#if BENCH_KERNEL == 2 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto data = d.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-        auto mean = m.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
-        auto stddev = sd.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Correlation2>(range<2>(mat_size, 1), id<2>(1, 0), [=, N_ = mat_size](cl::sycl::item<2> item) {
+        celerity::accessor data{d, cgh, celerity::access::slice<2>(0), celerity::read_only};
+        celerity::accessor mean{m, cgh, celerity::access::one_to_one{}, celerity::read_only};
+        celerity::accessor stddev{sd, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+        cgh.parallel_for<class Correlation2>(range<2>(mat_size, 1), id<2>(1, 0), [=, N_ = mat_size](celerity::item<2> item) {
             const auto j = item[0];
 
             BENCH_DATA_TYPE result = 0;
@@ -52,12 +52,12 @@ void correlation(celerity::distr_queue& queue,
         });
     });
 #endif
-#if KERNEL == 3 || !defined( KERNEL )
+#if BENCH_KERNEL == 3 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto data = d.template get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
-        auto mean = m.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-        auto stddev = sd.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-        cgh.parallel_for<class Correlation3>(range<2>(mat_size, mat_size), id<2>(1, 1), [=](cl::sycl::item<2> item) {
+        celerity::accessor data{d, cgh, celerity::access::one_to_one{}, celerity::read_write};
+        celerity::accessor mean{m, cgh, celerity::access::all{}, celerity::read_only};
+        celerity::accessor stddev{sd, cgh, celerity::access::all{}, celerity::read_only};
+        cgh.parallel_for<class Correlation3>(range<2>(mat_size, mat_size), id<2>(1, 1), [=](celerity::item<2> item) {
             const auto j = item[1];
 
             auto result = data[item];
@@ -70,12 +70,12 @@ void correlation(celerity::distr_queue& queue,
     });
 
 #endif
-#if KERNEL == 4 || !defined( KERNEL )
+#if BENCH_KERNEL == 4 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto data = d.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-        auto symmat = sym.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(1));
-        auto symmat2 = sym.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(0));
-        cgh.parallel_for<class Correlation4>(range<2>(mat_size - 1, 1), id<2>(1, 0), [=, M_ = mat_size, N_ = mat_size](cl::sycl::item<2> item) {
+        celerity::accessor data{d, cgh, celerity::access::all{}, celerity::read_only};
+        celerity::accessor symmat{sym, cgh, celerity::access::slice<2>(1), celerity::write_only, celerity::no_init};
+        celerity::accessor symmat2{sym, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
+        cgh.parallel_for<class Correlation4>(range<2>(mat_size - 1, 1), id<2>(1, 0), [=, M_ = mat_size, N_ = mat_size](celerity::item<2> item) {
             const auto j1 = item[0];
 
             symmat[{j1, j1}] = 1.0;
@@ -92,10 +92,10 @@ void correlation(celerity::distr_queue& queue,
         });
     });
 #endif
-#if KERNEL == 5 || !defined( KERNEL )
+#if BENCH_KERNEL == 5 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto symmat = sym.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Correlation5>(range<2>(1, 1), id<2>(mat_size, mat_size), [=](cl::sycl::item<2> item) { symmat[item] = 1.0; });
+        celerity::accessor symmat{sym, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+        cgh.parallel_for<class Correlation5>(celerity::range<2>(1, 1), id<2>(mat_size, mat_size), [=](celerity::item<2> item) { symmat[item] = 1.0; });
     });
 #endif
 }
@@ -132,10 +132,10 @@ public:
             }
         }
 
-        data_buf.initialize(data.data(), cl::sycl::range<2>((mat_size+1), (mat_size+1)));
-        mean_buf.initialize(mean.data(), cl::sycl::range<2>((mat_size+1), 1));
-        stddev_buf.initialize(stddev.data(), cl::sycl::range<2>((mat_size+1), 1));
-        symmat_buf.initialize(symmat.data(), cl::sycl::range<2>((mat_size+1), (mat_size+1)));
+        data_buf.initialize(data.data(),     celerity::range<2>((mat_size+1), (mat_size+1)));
+        mean_buf.initialize(mean.data(),     celerity::range<2>((mat_size+1), 1));
+        stddev_buf.initialize(stddev.data(), celerity::range<2>((mat_size+1), 1));
+        symmat_buf.initialize(symmat.data(), celerity::range<2>((mat_size+1), (mat_size+1)));
     }
 
     void run() {

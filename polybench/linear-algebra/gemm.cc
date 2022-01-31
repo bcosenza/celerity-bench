@@ -11,15 +11,17 @@ namespace values {
 
 
 
-void gemm(celerity::distr_queue& queue,
-        celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_b,
-        celerity::buffer<BENCH_DATA_TYPE, 2>& mat_res,
+void gemm(celerity::distr_queue queue,
+        celerity::buffer<BENCH_DATA_TYPE, 2> mat_a, celerity::buffer<BENCH_DATA_TYPE, 2> mat_b,
+        celerity::buffer<BENCH_DATA_TYPE, 2> mat_res,
         const size_t mat_size){
     queue.submit([=](celerity::handler& cgh) {
-        auto a = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
-        auto b = mat_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
-        auto res = mat_res.template get_access<cl::sycl::access::mode::read_write>(cgh, celerity::access::one_to_one<2>());
-        cgh.parallel_for<class Gemm>(mat_res.get_range(), [=, n = mat_size](cl::sycl::item<2> item) {
+		    celerity::accessor a{mat_a, cgh, celerity::access::slice<2>(1), celerity::read_only};
+		    celerity::accessor b{mat_b, cgh, celerity::access::slice<2>(0), celerity::read_only};
+		    celerity::accessor res{mat_res, cgh, celerity::access::one_to_one{}, celerity::read_write};
+        //auto a = mat_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+        //auto b = mat_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
+        cgh.parallel_for<class Gemm>(celerity::range<2>(mat_size, mat_size), [=, n = mat_size](celerity::item<2> item) {
             const auto i = item[0];
             const auto j = item[1];
             res[item] *= values::beta;
@@ -63,9 +65,10 @@ public:
             }
         }
 
-        mat_a_buf.initialize(mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_b_buf.initialize(mat_b.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_res_buf.initialize(mat_res.data(), cl::sycl::range<2>(mat_size, mat_size));
+        auto range = celerity::range<2>(mat_size, mat_size);
+        mat_a_buf.initialize(mat_a.data(), range);
+        mat_b_buf.initialize(mat_b.data(), range);
+        mat_res_buf.initialize(mat_res.data(), range);
     }
 
     void run() {
@@ -76,7 +79,7 @@ public:
 
     bool verify(VerificationSetting &ver) {
         bool verification_passed = true;
-        QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+        /* QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
             auto result = mat_res_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(mat_size, mat_size));
             cgh.run([=, &verification_passed]() {
 
@@ -101,7 +104,7 @@ public:
 
                     }
             });
-        });
+        }); */
         QueueManager::sync();
         return verification_passed;
     }

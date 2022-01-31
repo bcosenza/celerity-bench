@@ -17,41 +17,41 @@ void fdtd2d(celerity::distr_queue& queue,
     using namespace cl::sycl;
     using namespace celerity::access;
     for(size_t t = 0; t < TMAX; t++) {
-#if KERNEL == 1 || !defined( KERNEL )
+#if BENCH_KERNEL == 1 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler& cgh) {
-            auto fict = fict_buf.template get_access<access::mode::read>(cgh, celerity::access::fixed<2>({{t, 0}, {t, 0}}));
-            auto ey = ey_buf.template get_access<access::mode::discard_write>(cgh, one_to_one<2>());
-            cgh.parallel_for<class Fdtd2d1>(range<2>(1, mat_size), [=](item<2> item) { ey[item] = fict[{t, 0}]; });
+            celerity::accessor fict{fict_buf, cgh, celerity::access::fixed<2>({{t, 0}, {t, 0}}), celerity::read_only};
+            celerity::accessor ey{ey_buf, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+            cgh.parallel_for<class Fdtd2d1>(range<2>(1, mat_size), [=](celerity::item<2> item) { ey[item] = fict[{t, 0}]; });
         });
 #endif
-#if KERNEL == 2 || !defined( KERNEL )
+#if BENCH_KERNEL == 2 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler& cgh) {
-            auto ey = ey_buf.template get_access<access::mode::read_write>(cgh, one_to_one<2>());
-            auto hz = hz_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
-            cgh.parallel_for<class Fdtd2d2>(range<2>(mat_size - 1, mat_size), id<2>(1, 0), [=](item<2> item) {
+            celerity::accessor ey{ey_buf, cgh, celerity::access::one_to_one{}, celerity::read_write};
+            celerity::accessor hz{hz_buf, cgh, celerity::access::neighborhood<2>(1,1), celerity::read_only};
+            cgh.parallel_for<class Fdtd2d2>(range<2>(mat_size - 1, mat_size), id<2>(1, 0), [=](celerity::item<2> item) {
                 const auto i = item[0];
                 const auto j = item[1];
                 ey[item] = ey[item] - 0.5 * (hz[item] - hz[{(i - 1), j}]);
             });
         });
 #endif
-#if KERNEL == 3 || !defined( KERNEL )
+#if BENCH_KERNEL == 3 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler& cgh) {
-            auto ex = ex_buf.template get_access<access::mode::read_write>(cgh, one_to_one<2>());
-            auto hz = hz_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
-            cgh.parallel_for<class Fdtd2d3>(range<2>(mat_size, mat_size - 1), id<2>(0, 1), [=](item<2> item) {
+            celerity::accessor ex{ex_buf, cgh, celerity::access::one_to_one{}, celerity::read_write};
+            celerity::accessor hz{hz_buf, cgh, celerity::access::neighborhood<2>(1,1), celerity::read_only};
+            cgh.parallel_for<class Fdtd2d3>(range<2>(mat_size, mat_size - 1), id<2>(0, 1), [=](celerity::item<2> item) {
                 const auto i = item[0];
                 const auto j = item[1];
                 ex[item] = ex[item] - 0.5 * (hz[item] - hz[{i, (j - 1)}]);
             });
         });
 #endif
-#if KERNEL == 4 || !defined( KERNEL )
+#if BENCH_KERNEL == 4 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler& cgh) {
-            auto ex = ex_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
-            auto ey = ey_buf.template get_access<access::mode::read>(cgh, neighborhood<2>(1, 1));
-            auto hz = hz_buf.template get_access<access::mode::read_write>(cgh, one_to_one<2>());
-            cgh.parallel_for<class Fdtd2d4>(hz_buf.get_range(), [=](item<2> item) {
+            celerity::accessor ex{ex_buf, cgh, celerity::access::neighborhood<2>(1,1), celerity::read_only};
+            celerity::accessor ey{ey_buf, cgh, celerity::access::neighborhood<2>(1,1), celerity::read_only};
+            celerity::accessor hz{hz_buf, cgh, celerity::access::one_to_one{}, celerity::read_write};
+            cgh.parallel_for<class Fdtd2d4>(hz_buf.get_range(), [=](celerity::item<2> item) {
                 const auto i = item[0];
                 const auto j = item[1];
                 hz[item] = hz[item] - 0.7 * (ex[{i, (j + 1)}] - ex[item] + ey[{(i + 1), j}] - ey[item]);
