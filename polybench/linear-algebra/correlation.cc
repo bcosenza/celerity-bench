@@ -74,7 +74,7 @@ void correlation(celerity::distr_queue queue,
     queue.submit([=](celerity::handler& cgh) {
         celerity::accessor data{d, cgh, celerity::access::all{}, celerity::read_only};
         celerity::accessor symmat{sym, cgh, celerity::access::slice<2>(1), celerity::write_only, celerity::no_init};
-        celerity::accessor symmat2{sym, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
+        //celerity::accessor symmat2{sym, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
         cgh.parallel_for<class Correlation4>(range<2>(mat_size - 1, 1), id<2>(1, 0), [=, M_ = mat_size, N_ = mat_size](celerity::item<2> item) {
             const auto j1 = item[0];
 
@@ -87,17 +87,17 @@ void correlation(celerity::distr_queue queue,
                 }
 
                 symmat[{j1, j2}] = result;
-                symmat2[{j2, j1}] = result;
+                // symmat2[{j2, j1}] = result; // TODO this is currently not supported by celerity
             }
         });
     });
 #endif
-#if BENCH_KERNEL == 5 || !defined( BENCH_KERNEL )
-    queue.submit([=](celerity::handler& cgh) {
-        celerity::accessor symmat{sym, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
-        cgh.parallel_for<class Correlation5>(celerity::range<2>(1, 1), id<2>(mat_size, mat_size), [=](celerity::item<2> item) { symmat[item] = 1.0; });
-    });
-#endif
+//#if BENCH_KERNEL == 5 || !defined( BENCH_KERNEL )
+//    queue.submit([=](celerity::handler& cgh) {
+//        celerity::accessor symmat{sym, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+//        cgh.parallel_for<class Correlation5>(celerity::range<2>(1, 1), id<2>(mat_size, mat_size), [=](celerity::item<2> item) { symmat[item] = 1.0; });
+//    });
+//#endif
 }
 
 

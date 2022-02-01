@@ -7,9 +7,9 @@ using BENCH_DATA_TYPE = float;
 
 class Gramschmidt;
 
-void gramschmidt(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& mat_a,
-              celerity::buffer<BENCH_DATA_TYPE, 2>& mat_r,
-              celerity::buffer<BENCH_DATA_TYPE, 2>& mat_q, const size_t mat_size) {
+void gramschmidt(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> mat_a,
+              celerity::buffer<BENCH_DATA_TYPE, 2> mat_r,
+              celerity::buffer<BENCH_DATA_TYPE, 2> mat_q, const size_t mat_size) {
 
     using namespace cl::sycl;
     using namespace celerity::access;
@@ -21,12 +21,13 @@ void gramschmidt(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE,
                     {1, 1}};
         };
 
-#if KERNEL == 1 || !defined( KERNEL )
+#if BENCH_KERNEL == 1 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler &cgh) {
-            auto A = mat_a.template get_access<access::mode::read>(cgh, slice<2>(0));
-            auto R = mat_r.template get_access<access::mode::discard_write>(cgh, non_empty_chunk_range_mapper);
+            celerity::accessor A{mat_a, cgh, celerity::access::slice<2>(0), celerity::read_only};
+            //celerity::accessor R{mat_r, cgh, non_empty_chunk_range_mapper, celerity::write_only, celerity::no_init};
+            celerity::accessor R{mat_r, cgh, celerity::access::fixed<2>({{k, k}, {1, 1}}), celerity::write_only, celerity::no_init};
 
-            cgh.parallel_for<class Gramschmidt1>(range<2>(1, 1), [=, M_ = mat_size](item<2> item) {
+            cgh.parallel_for<class Gramschmidt1>(range<2>(1, 1), [=, M_ = mat_size](celerity::item<2> item) {
                 BENCH_DATA_TYPE nrm = 0;
                 for (size_t i = 0; i < M_; i++) {
                     nrm += A[{i, k}] * A[{i, k}];
@@ -35,22 +36,22 @@ void gramschmidt(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE,
             });
         });
 #endif
-#if KERNEL == 2 || !defined( KERNEL )
+#if BENCH_KERNEL == 2 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler &cgh) {
-            auto A = mat_a.template get_access<access::mode::read>(cgh, one_to_one<2>());
-            auto R = mat_r.template get_access<access::mode::read>(cgh, celerity::access::fixed<2>({{k, k},
-                                                                                                    {1, 1}}));
-            auto Q = mat_q.template get_access<access::mode::discard_write>(cgh, one_to_one<2>());
-            cgh.parallel_for<class Gramschmidt2>(range<2>(mat_size, 1), id<2>(0, k),
-                                                 [=](item<2> item) { Q[item] = A[item] / R[{k, k}]; });
+            celerity::accessor A{mat_a, cgh, celerity::access::one_to_one{}, celerity::read_only};
+            celerity::accessor R{mat_r, cgh, celerity::access::fixed<2>({{k, k}, {1, 1}}), celerity::read_only};
+            celerity::accessor Q{mat_q, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+            cgh.parallel_for<class Gramschmidt2>(range<2>(mat_size, 1), id<2>(0, k), [=](celerity::item<2> item) {
+                Q[item] = A[item] / R[{k, k}];
+            });
         });
 #endif
-#if KERNEL == 3 || !defined( KERNEL )
+#if BENCH_KERNEL == 3 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler &cgh) {
-            auto A = mat_a.template get_access<access::mode::read_write>(cgh, slice<2>(0));
-            auto R = mat_r.template get_access<access::mode::discard_write>(cgh, one_to_one<2>());
-            auto Q = mat_q.template get_access<access::mode::read>(cgh, slice<2>(0));
-            cgh.parallel_for<class Gramschmidt3>(range<2>(1, mat_size - k - 1), id<2>(k, k + 1), [=, M_ = mat_size](item<2> item) {
+            celerity::accessor A{mat_a, cgh, celerity::access::slice<2>(0), celerity::read_write};
+            celerity::accessor R{mat_r, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
+            celerity::accessor Q{mat_q, cgh, celerity::access::slice<2>(0), celerity::read_only};
+            cgh.parallel_for<class Gramschmidt3>(range<2>(1, mat_size - k - 1), id<2>(k, k + 1), [=, M_ = mat_size](celerity::item<2> item) {
                 const auto k = item[0];
                 const auto j = item[1];
 
@@ -100,9 +101,9 @@ public:
             }
         }
 
-        mat_a_buf.initialize(mat_a.data(), cl::sycl::range<2>(mat_size, mat_size));
-        mat_r_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
-        mat_q_buf.initialize(cl::sycl::range<2>(mat_size, mat_size));
+        mat_a_buf.initialize(mat_a.data(), celerity::range<2>(mat_size, mat_size));
+        mat_r_buf.initialize(celerity::range<2>(mat_size, mat_size));
+        mat_q_buf.initialize(celerity::range<2>(mat_size, mat_size));
     }
 
     void run() {

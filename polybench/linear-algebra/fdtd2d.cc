@@ -8,18 +8,19 @@ constexpr auto TMAX = 500;
 
 class Fdtd2d;
 
-void fdtd2d(celerity::distr_queue& queue,
-           celerity::buffer<BENCH_DATA_TYPE, 2>& fict_buf,
-           celerity::buffer<BENCH_DATA_TYPE, 2>& ex_buf,
-           celerity::buffer<BENCH_DATA_TYPE, 2>& ey_buf,
-           celerity::buffer<BENCH_DATA_TYPE, 2>& hz_buf,
+void fdtd2d(celerity::distr_queue queue,
+           celerity::buffer<BENCH_DATA_TYPE, 2> fict_buf,
+           celerity::buffer<BENCH_DATA_TYPE, 2> ex_buf,
+           celerity::buffer<BENCH_DATA_TYPE, 2> ey_buf,
+           celerity::buffer<BENCH_DATA_TYPE, 2> hz_buf,
            const size_t mat_size) {
     using namespace cl::sycl;
     using namespace celerity::access;
     for(size_t t = 0; t < TMAX; t++) {
 #if BENCH_KERNEL == 1 || !defined( BENCH_KERNEL )
         queue.submit([=](celerity::handler& cgh) {
-            celerity::accessor fict{fict_buf, cgh, celerity::access::fixed<2>({{t, 0}, {t, 0}}), celerity::read_only};
+            celerity::accessor fict{fict_buf, cgh, celerity::access::fixed<2>({{t, 0}, {1, 1}}), celerity::read_only};
+            //celerity::accessor fict{fict_buf, cgh, celerity::access::all{}, celerity::read_only};
             celerity::accessor ey{ey_buf, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
             cgh.parallel_for<class Fdtd2d1>(range<2>(1, mat_size), [=](celerity::item<2> item) { ey[item] = fict[{t, 0}]; });
         });
@@ -99,10 +100,10 @@ public:
             }
         }
 
-        fict_buf.initialize(fict.data(), cl::sycl::range<2>(TMAX, 1));
-        ex_buf.initialize(ex.data(), cl::sycl::range<2>(mat_size, (mat_size+1)));
-        ey_buf.initialize(ey.data(), cl::sycl::range<2>(mat_size+1, mat_size));
-        hz_buf.initialize(hz.data(), cl::sycl::range<2>(mat_size, mat_size));
+        fict_buf.initialize(fict.data(), celerity::range<2>(TMAX, 1));
+        ex_buf.initialize(ex.data(),     celerity::range<2>(mat_size, (mat_size+1)));
+        ey_buf.initialize(ey.data(),     celerity::range<2>(mat_size+1, mat_size));
+        hz_buf.initialize(hz.data(),     celerity::range<2>(mat_size, mat_size));
     }
 
     void run() {

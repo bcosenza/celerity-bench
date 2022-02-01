@@ -47,12 +47,9 @@ void correlation(celerity::distr_queue queue,
 #endif
 #if BENCH_KERNEL == 3 || !defined( BENCH_KERNEL )
     queue.submit([=](celerity::handler& cgh) {
-        auto data = d.template get_access<access::mode::read>(cgh, celerity::access::all<2>());
-        auto symmat = sd.template get_access<access::mode::discard_write>(cgh, slice<2>(1));
-        auto symmat2 = sd.template get_access<access::mode::discard_write>(cgh, slice<2>(0));
         celerity::accessor data{d, cgh, celerity::access::all{}, celerity::read_only};
         celerity::accessor symmat{sd, cgh, celerity::access::slice<2>(1), celerity::write_only, celerity::no_init};
-        celerity::accessor symmat2{sd, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
+        //celerity::accessor symmat2{sd, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
 
         cgh.parallel_for<class Covariance3>(range<2>(mat_size, 1), id<2>(1, 0), [=, M_ = mat_size, N_ = mat_size](item<2> item) {
             const auto j1 = item[0];
@@ -66,7 +63,7 @@ void correlation(celerity::distr_queue queue,
                 }
 
                 symmat[{j1, j2}] = result;
-                symmat2[{j2, j1}] = result;
+                //symmat2[{j2, j1}] = result; // TODO not supported by celerity
             }
         });
     });
