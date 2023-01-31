@@ -15,14 +15,15 @@ void conv3D(celerity::distr_queue queue,
     queue.submit([=](celerity::handler& cgh) {
         celerity::accessor A{mat_a, cgh, celerity::access::neighborhood<3>(1,1,1), celerity::read_only};
         celerity::accessor B{mat_b, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
-        for(size_t i = 1; i < mat_size - 1; i++){
+        //for(size_t i = 1; i < mat_size - 1; i++){
             cgh.parallel_for<class Conv3D>(cl::sycl::range<3>(1, mat_size-1,mat_size-1),cl::sycl::id<3> {1,1,1}, [=](celerity::item<3> item) {
                 const BENCH_DATA_TYPE c11 = +2,  c21 = +5,  c31 = -8;
                 const BENCH_DATA_TYPE c12 = -3,  c22 = +6,  c32 = -9;
                 const BENCH_DATA_TYPE c13 = +4,  c23 = +7,  c33 = +10;
 
+                const auto i = item[2];
                 const auto j = item[1];
-                const auto k = item[2];
+                const auto k = item[0];
 
                 B[item] = c11 * A[{(i - 1), (j - 1), (k - 1)}] + c13 * A[{(i + 1), (j - 1), (k - 1)}] + c21 * A[{(i - 1), (j - 1), (k - 1)}]
                           + c23 * A[{(i + 1), (j - 1), (k - 1)}] + c31 * A[{(i - 1), (j - 1), (k - 1)}] + c33 * A[{(i + 1), (j - 1), (k - 1)}]
@@ -30,7 +31,7 @@ void conv3D(celerity::distr_queue queue,
                           + c11 * A[{(i - 1), (j - 1), (k + 1)}] + c13 * A[{(i + 1), (j - 1), (k + 1)}] + c21 * A[{(i - 1), (j + 0), (k + 1)}]
                           + c23 * A[{(i + 1), (j + 0), (k + 1)}] + c31 * A[{(i - 1), (j + 1), (k + 1)}] + c33 * A[{(i + 1), (j + 1), (k + 1)}];
             });
-        }
+        //}
     });
 
 }

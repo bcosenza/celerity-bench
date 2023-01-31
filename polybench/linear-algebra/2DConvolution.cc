@@ -14,12 +14,12 @@ void conv2D(celerity::distr_queue queue,
     queue.submit([=](celerity::handler& cgh) {
         celerity::accessor A{mat_a, cgh, celerity::access::neighborhood<2>(1,1), celerity::read_only};
         celerity::accessor B{mat_b, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
-        cgh. parallel_for<class Conv2D>(cl::sycl::range<2>(mat_size-1, mat_size-1),cl::sycl::id<2> {1,1}, [=](celerity::item<2> item) {
+        cgh. parallel_for<class Conv2D>(cl::sycl::range<2>(mat_size-2, mat_size-2),cl::sycl::id<2> {1,1}, [=](celerity::item<2> item) {
             const BENCH_DATA_TYPE c11 = +0.2, c21 = +0.5, c31 = -0.8;
             const BENCH_DATA_TYPE c12 = -0.3, c22 = +0.6, c32 = -0.9;
             const BENCH_DATA_TYPE c13 = +0.4, c23 = +0.7, c33 = +0.10;
-            const auto i = item[0];
-            const auto j = item[1];
+            const auto i = item[0] + 1;
+            const auto j = item[1] + 1;
 
             B[item] = c11 * A[{(i - 1), (j - 1)}] + c12 * A[{(i + 0), (j - 1)}] + c13 * A[{(i + 1), (j - 1)}]
                     + c21 * A[{(i - 1), (j + 0)}] + c22 * A[{(i + 0), (j + 0)}] + c23 * A[{(i + 1), (j + 0)}]

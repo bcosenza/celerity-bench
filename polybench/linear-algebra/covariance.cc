@@ -51,7 +51,7 @@ void correlation(celerity::distr_queue queue,
         celerity::accessor symmat{sd, cgh, celerity::access::slice<2>(1), celerity::write_only, celerity::no_init};
         //celerity::accessor symmat2{sd, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
 
-        cgh.parallel_for<class Covariance3>(range<2>(mat_size, 1), id<2>(1, 0), [=, M_ = mat_size, N_ = mat_size](item<2> item) {
+        cgh.parallel_for<class Covariance3>(range<2>(mat_size, 1), id<2>(1, 0), [=, M_ = mat_size, N_ = mat_size](celerity::item<2> item) {
             const auto j1 = item[0];
 
             symmat[{j1, j1}] = 1.0;

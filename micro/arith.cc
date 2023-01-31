@@ -74,6 +74,13 @@ public:
 
   bool verify(VerificationSetting& ver) {
     bool pass = true;
+    QueueManager::getInstance().submit(celerity::allow_by_ref, [&](celerity::handler& cgh) {
+      auto result = output_buf.template get_access<s::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
+      cgh.host_task(celerity::on_master_node, [=, &pass](celerity::partition<2> part) {
+
+			auto result = mat_a_buf.get_access<cl::sycl::access::mode::read, cl::sycl::access::target::host_buffer>(cgh, celerity::access::one_to_one<2>());
+
+			cgh.host_task(range, [=, &verification_passed](celerity::partition<2> part) {
     QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<s::access::mode::read>(cgh, cl::sycl::range<1>(args.problem_size));
       cgh.run([=,&pass]() {

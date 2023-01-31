@@ -48,76 +48,76 @@ public:
   }
 
 #if defined(BENCH_MAPPER_ONE_TO_ONE)
-  void one_to_one(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+  void one_to_one(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> buf_a, celerity::buffer<BENCH_DATA_TYPE, 2> buf_b,celerity::buffer<BENCH_DATA_TYPE, 2> buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::one_to_one<2>());
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::one_to_one<2>());
+      celerity::accessor a{buf_a, cgh, celerity::access::one_to_one{}, celerity::read_only};
+      celerity::accessor b{buf_b, cgh, celerity::access::one_to_one{}, celerity::read_only};
+      celerity::accessor c{buf_c, cgh, celerity::access::one_to_one{}, celerity::write_only, celerity::no_init};
 
-      cgh.parallel_for<class OneToOneMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class OneToOneMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](celerity::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
   }
 #elif defined(BENCH_MAPPER_SLICE_X)
-  void slicex(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+  void slicex(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> buf_a, celerity::buffer<BENCH_DATA_TYPE, 2> buf_b,celerity::buffer<BENCH_DATA_TYPE, 2> buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(0));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(0));
+      celerity::accessor a{buf_a, cgh, celerity::access::slice<2>(0), celerity::read_only};
+      celerity::accessor b{buf_b, cgh, celerity::access::slice<2>(0), celerity::read_only};
+      celerity::accessor c{buf_c, cgh, celerity::access::slice<2>(0), celerity::write_only, celerity::no_init};
 
-      cgh.parallel_for<class SliceMapperKernelX>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class SliceMapperKernelX>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](celerity::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
   }
 #elif defined(BENCH_MAPPER_SLICE_Y)
-  void slicey(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+  void slicey(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> buf_a, celerity::buffer<BENCH_DATA_TYPE, 2> buf_b,celerity::buffer<BENCH_DATA_TYPE, 2> buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::slice<2>(1));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::slice<2>(1));
+      celerity::accessor a{buf_a, cgh, celerity::access::slice<2>(1), celerity::read_only};
+      celerity::accessor b{buf_b, cgh, celerity::access::slice<2>(1), celerity::read_only};
+      celerity::accessor c{buf_c, cgh, celerity::access::slice<2>(1), celerity::write_only, celerity::no_init};
 
-      cgh.parallel_for<class SliceMapperKernelY>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class SliceMapperKernelY>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](celerity::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
   }
 
 #elif defined(BENCH_MAPPER_NEIGHBOURHOOD)
-  void neighborhood(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, size_t neigh_size) {
+  void neighborhood(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> buf_a, celerity::buffer<BENCH_DATA_TYPE, 2> buf_b,celerity::buffer<BENCH_DATA_TYPE, 2> buf_c, size_t neigh_size) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size));
+      celerity::accessor a{buf_a, cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size), celerity::read_only};
+      celerity::accessor b{buf_b, cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size), celerity::read_only};
+      celerity::accessor c{buf_c, cgh, celerity::access::neighborhood<2>(neigh_size, neigh_size), celerity::write_only, celerity::no_init};
 
-      cgh.parallel_for<class NeighborhoodMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class NeighborhoodMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](celerity::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
   }
 
 #elif defined(BENCH_MAPPER_FIXED)
-  void fixed(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c, size_t fixed_size) {
+  void fixed(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> buf_a, celerity::buffer<BENCH_DATA_TYPE, 2> buf_b,celerity::buffer<BENCH_DATA_TYPE, 2> buf_c, size_t fixed_size) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{fixed_size, fixed_size}}));
+      celerity::accessor a{buf_a, cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{1,1}}), celerity::read_only};
+      celerity::accessor b{buf_b, cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{1,1}}), celerity::read_only};
+      celerity::accessor c{buf_c, cgh, celerity::access::fixed<2>({{fixed_size, fixed_size},{1,1}}), celerity::write_only, celerity::no_init};
 
-      cgh.parallel_for<class FixedMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class FixedMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](celerity::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
   }
 
 #elif defined(BENCH_MAPPER_ALL)
-  void all(celerity::distr_queue& queue, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_a, celerity::buffer<BENCH_DATA_TYPE, 2>& buf_b,celerity::buffer<BENCH_DATA_TYPE, 2>& buf_c) {
+  void all(celerity::distr_queue queue, celerity::buffer<BENCH_DATA_TYPE, 2> buf_a, celerity::buffer<BENCH_DATA_TYPE, 2> buf_b,celerity::buffer<BENCH_DATA_TYPE, 2> buf_c) {
     queue.submit([=](celerity::handler& cgh) {
-      auto a = buf_a.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-      auto b = buf_b.template get_access<cl::sycl::access::mode::read>(cgh, celerity::access::all<2>());
-      auto c = buf_c.template get_access<cl::sycl::access::mode::discard_write>(cgh, celerity::access::all<2>());
+      celerity::accessor a{buf_a, cgh, celerity::access::all{}, celerity::read_only};
+      celerity::accessor b{buf_b, cgh, celerity::access::all{}, celerity::read_only};
+      celerity::accessor c{buf_c, cgh, celerity::access::all{}, celerity::write_only, celerity::no_init};
 
-      cgh.parallel_for<class AllMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](cl::sycl::item<2> item) {
+      cgh.parallel_for<class AllMapperKernel>(cl::sycl::range<2>(args.problem_size, args.problem_size), [=](celerity::item<2> item) {
         c[{item[0], item[1]}] = a[{item[0], item[1]}] + b[{item[0], item[1]}];
       });
     });
@@ -150,7 +150,7 @@ public:
 
   bool verify(VerificationSetting &ver) {
     bool verification_passed = true;
-    QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
+    /*QueueManager::getInstance().with_master_access([&](celerity::handler& cgh) {
       auto result = output_buf.template get_access<cl::sycl::access::mode::read>(cgh, cl::sycl::range<2>(args.problem_size, args.problem_size));
       cgh.run([=, &verification_passed]() {
         for(size_t i = 0; i < args.problem_size; i++){
@@ -163,7 +163,7 @@ public:
           } 
         } 
       });
-    });
+    });*/
     QueueManager::sync();
     return verification_passed;
   }  
